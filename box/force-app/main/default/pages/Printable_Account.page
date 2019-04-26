@@ -1,0 +1,27 @@
+<apex:page standardController="Account" renderAs="pdf" applyBodyTag="false" standardStylesheets="True">
+    <head>
+    <!----
+        <style> 
+            body { font-family: 'Arial Unicode MS'; }
+            .companyName { font: bold 30px; color: red; }  
+        </style>
+        --->
+    </head>
+    <body>
+        <center>
+        <h1>New Account Name!</h1>
+     
+        <apex:panelGrid columns="2" width="100%">
+            <apex:outputText value="{!account.Site}"><b>Account Site:</b> </apex:outputText>
+            <apex:outputText value="{!account.Owner.Name}">Account Owner: </apex:outputText>
+            
+            <apex:outputText value="{!account.Location_Number__c}">Location Number: </apex:outputText>
+            <apex:outputText value="{!account.Account_Manager__r.Name}">Account Manager: </apex:outputText>
+            
+            <apex:outputText value="{!account.Name}" styleClass="companyName"/>
+            <apex:outputText value="{!NOW()}"></apex:outputText>
+        </apex:panelGrid>
+
+        </center>
+    </body>
+</apex:page>

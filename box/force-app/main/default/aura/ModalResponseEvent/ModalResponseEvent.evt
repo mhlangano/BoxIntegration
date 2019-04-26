@@ -1,0 +1,4 @@
+<aura:event type="COMPONENT" description="Get response from modal whether Yes/No was selected" >
+    <aura:attribute name="reply" type="String" description="User selection, Yes/No"/>
+    <aura:attribute name="auraId" type="String" description="Identify component/attribute to update"/>
+</aura:event>

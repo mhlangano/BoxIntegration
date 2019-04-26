@@ -1,0 +1,3 @@
+<apex:page >
+    <flow:interview name="Sales_Week_Event_Logger"/>
+</apex:page>

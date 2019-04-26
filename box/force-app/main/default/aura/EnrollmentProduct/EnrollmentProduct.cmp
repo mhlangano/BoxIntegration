@@ -1,0 +1,135 @@
+<aura:component access="global" controller="EnrollmentWizardController">
+    <aura:handler name="init" action="{!c.init}" value="{!this}" />
+    <aura:handler name="reply" event="c:ModalResponseEvent" action="{!c.handleModalResponseEvent}"/>
+    <aura:handler name="CRCDatesEvent" event="c:CRCDatesEvent" action="{!c.handleCRCDateEvent}"/>
+    
+    <aura:registerEvent name="ProductEvent" type="c:ProductEvent" />
+    <aura:method name="deselectCheck" action="{!c.checkDeselection}" access="PUBLIC">
+        <aura:attribute name="ProductId" type="String" />
+    </aura:method>
+    
+    <!-- Product Info -->
+    <aura:attribute name="ProductInfo" type="Object" />
+    <aura:attribute name="FamilyId" type="String" />
+    <aura:attribute name="TotalCost" type="Double" />
+    <aura:attribute name="CRCCost" type="Double" default="0.00"/>
+    <aura:attribute name="CRCDays" type="Integer" default="0"/>
+    <aura:attribute name="CRCErrorText" type="String"/>
+    <aura:attribute name="ProductScripts" type="Object" description="Product2 obj from Salesforce for scripts"/>
+    
+    <!-- Upgrade Attributes -->
+    <aura:attribute name="UpgradeMap" type="Object" />
+    <aura:attribute name="UpgradeList" type="Object[]" />
+    <aura:attribute name="SelectedUpgrades" type="List" />
+    <aura:attribute name="PreviouslySelectedUpgrades" type="List" />
+    
+    <!-- Upgrade Type Attributes -->
+    <aura:attribute name="CRCDatesList" type="List" />
+    <aura:attribute name="LastSelectedUpgrade" type="Object" />
+    <aura:handler name="change" value="{!v.CRCDatesList}" action="{!c.calculateCRCCosts}"/>
+    
+    <!-- Lists formatted for API to return for ValidateTravelerRates calls -->
+    <aura:attribute name="APIUpgrades" type="Object[]"/>
+    <aura:attribute name="APICRCDates" type="Object[]"/>
+    
+    <!-- Dates to pass on to the CRC component for defaults -->
+    <aura:attribute name="EnrollmentData" type="Object"/>
+    
+    <!-- Modal Attributes -->
+    <aura:attribute name="ModalTitle" type="String" />
+    <aura:attribute name="ModalText" type="String" />
+    <aura:attribute name="ModalIdentifier" type="String" />
+    <aura:attribute name="ModalLayout" type="Boolean" default="true" />
+    <aura:attribute name="ModalVisibilityClass" type="String" default="slds-hide" />
+    
+    <lightning:card iconName="standard:product" class="slds-card_boundary slds-m-bottom_large">
+        <aura:set attribute="title">
+            <b>{!v.ProductInfo.productName}</b>  
+            <br/>
+            <span class="slds-text-title">[{!v.ProductInfo.productCode}] {!v.ProductInfo.formNumber}</span>
+            <span class="slds-text-title slds-text-color_success slds-p-left_large">${!v.ProductInfo.selectedCoverage.baseRate}</span>
+        </aura:set>
+        <aura:set attribute="actions">
+            <span class="slds-text-title slds-p-right_large">
+                Total Cost: <lightning:formattedNumber class="slds-text-color_success" value="{!v.TotalCost}" style="currency" currencyCode="USD" />
+            </span>
+            <lightning:button label="Traveler Rates" aura:id="traveler_rate_button" onclick="{!c.travelerRateButtonHandler}"/>
+            <lightning:button label="Purchase" aura:id="purchase_button" onclick="{!c.purchaseButtonHandler}" class="slds-button_success" />
+        </aura:set>
+		
+        <div class="slds-row">
+        	<div class="slds-col--padded slds-size_1-of-4">
+                <!-- Coverage selection dropdown -->
+                <lightning:select aura:id="coverage_select" label="Coverage Type" onchange="{!c.coverageSelectHandler}">
+                    <aura:iteration items="{!v.ProductInfo.coverages}" var="c" indexVar="index">
+                        <option value="{!c.coverageID}">{!c.description}</option>
+                    </aura:iteration>
+                </lightning:select>
+               
+                
+                
+            </div>
+            <div class="slds-col--padded slds-size_1-of-4">
+                <aura:if isTrue="{!v.ProductInfo.selectedCoverage.flightAccidentCoverages.length > 0}">
+                    <!-- Flight Accident Coverage dropdown -->
+                    <lightning:select aura:id="flight_coverage_select" label="Flight Accident Coverage" onchange="{!c.flightCoverageSelectHandler}">
+                        <aura:iteration items="{!v.ProductInfo.selectedCoverage.flightAccidentCoverages}" var="c" indexVar="index">
+                            <option value="{!c.flightAccidentCoverageId}">{!c.description}</option>
+                        </aura:iteration>
+                    </lightning:select>
+                </aura:if>
+            </div>
+            <div class="slds-col--padded slds-size_2-of-4 slds-text-align_right">
+                <!-- Product Scripts section -->
+                <span class="slds-p-right_large">Scripts:</span>
+                <lightning:button aura:id="product_script" variant="base" label="Product" title="Product Script" onclick="{!c.scriptButtonHandler}" class="slds-p-right_small"/>
+                <lightning:button aura:id="restriction_script" variant="base" label="Restriction" title="Restriction Script" onclick="{!c.scriptButtonHandler}" class="slds-p-right_small"/>
+                <!-- <lightning:button aura:id="delivery_script" variant="base" label="Delivery" title="Delivery Script" onclick="{!c.scriptButtonHandler}" class="slds-p-right_small"/> -->
+
+            </div>
+        </div>
+        
+        <div class="slds-row">
+            <div class="slds-col--padded slds-size_2-of-4">
+                <!-- Checkbox Group is List of All Upgrades -->
+                <lightning:checkboxGroup name="Upgrades" aura:id="UpgradeGroup" label="Optional Upgrades" 
+                                         options="{!v.UpgradeList}" value="{!v.SelectedUpgrades}" onchange="{!c.handleUpgradeSelection}"/>
+                
+            </div>
+            <div class="slds-col--padded slds-size_1-of-4" aura:id="product_upgrade_displays">
+                <!-- List of container divs for upgrade-specific displays -->
+                <div class="slds-box slds-theme_shade slds-hide" aura:id="crc_dates_display">
+                    <div class="slds-row slds-clearfix">
+                        <h3 class="slds-float_left">Rental Vehicle Coverage</h3>
+                        <p class="slds-float_right">Cost: ${!v.CRCCost} total ({!v.CRCDays} days)</p>
+                    </div>
+                    <aura:if isTrue="{!v.CRCErrorText.length > 0}">
+                        <div class="slds-row" aura:id="crcerror">
+                            <div class="slds-col--padded slds-text-align_center slds-text-color_error">
+                                <strong>{!v.CRCErrorText}</strong>
+                            </div>
+                        </div>
+                    </aura:if>
+                    <div id="crcdates" aura:id="crcdates" class="slds-row">
+                        <aura:iteration items="{!v.CRCDatesList}" var="item" indexVar="index" >
+                            <c:dynamicCRCDatesComponent CRCDatesInstance="{!item}" datesRowIndex="{!index}" EnrollmentData="{!v.EnrollmentData}" />
+                        </aura:iteration>
+                    </div>
+                    <div class="slds-row text-center " >
+                        <lightning:button variant="brand" aura:id="add_crc_dates" label="Add Dates" onclick="{!c.addCRCDate}"/>
+                    </div>
+                </div>
+            </div>
+                     
+        </div>
+        <div class="slds-row">
+            <div class="slds-col--padded slds-size_1-of-4">
+       
+            </div>                 
+        </div>
+    </lightning:card>
+    
+    <!-- This modal flashes a confirmation for each upgrade that is de-selected -->
+    <c:EnrollmentModal words="{!v.ModalText}" title="{!v.ModalTitle}" Layout="{!v.ModalLayout}"
+                       showHideModal="{!v.ModalVisibilityClass}" auraId="{!v.ModalIdentifier}"/>
+</aura:component>

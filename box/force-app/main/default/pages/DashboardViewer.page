@@ -1,0 +1,5 @@
+<apex:page StandardController="Account"  >
+
+	<c:FinancialDashboard RID="{!Account.ID}"/>
+
+</apex:page>

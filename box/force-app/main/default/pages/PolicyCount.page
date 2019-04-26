@@ -1,0 +1,10 @@
+<apex:page controller="ctrl_PolicyCount" >
+
+	<apex:form id="theForm">
+		<apex:pageBlock >
+				<c:PolicyDashboard RID="{!UserID}"/> 
+				<apex:commandButton action="{!goToReport}" value="Policy Count Dashboard Detail Report" id="cb_Accounts" />			
+		</apex:pageBlock>	
+	</apex:form>
+
+</apex:page>

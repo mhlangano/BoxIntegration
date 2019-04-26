@@ -1,0 +1,5 @@
+<aura:event type="COMPONENT" description="Event bubbles actions from Traveler to parent component.">
+    <aura:attribute name="Traveler" type="Traveler__c" />
+    <aura:attribute name="RowIndex" type="Integer" />
+    <aura:attribute name="Action" type="String" />
+</aura:event>

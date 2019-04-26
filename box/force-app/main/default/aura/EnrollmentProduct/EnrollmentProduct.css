@@ -1,0 +1,7 @@
+.THIS .inline-flex {
+    display: inline-flex;
+}
+.THIS .checkbox{
+  display: inline-block;
+  float: left;
+}

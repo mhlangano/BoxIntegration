@@ -1,0 +1,150 @@
+<aura:component controller="EnrollmentWizardController" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickAction" access="global" >          
+    <aura:attribute name="record" type="Object" />
+    <force:recordData aura:id="recordLoader" 
+                      recordId="{!v.recordId}" 
+                      fields="Record_Status__c,Agent_Email__c,Email1__c,Email2__c,Confirmation_Number__c,Quote_Number__c,Company_DBA__r.Name,Plan_Type__c"
+                      targetFields="{!v.record}" 
+                      recordUpdated="{!c.enrollmentLoaded}"/>
+    <aura:attribute name="isEnrollment" type="Boolean"/>
+
+    <aura:attribute name="quoteEmail" type="String" />
+
+    <aura:attribute name="confirmEmail1" type="String" />
+    <aura:attribute name="confirmEmail2" type="String" />
+    <aura:attribute name="agentEmail" type="String" />
+    
+    <aura:attribute name="recordTypeMsg" type="String" />
+
+	<!-- LoadPostSalePolicy API-->
+    <aura:attribute name="loadPostSalePolicyPayload" type="Object" description ="Data sent to policy endpoint" /> 
+    <aura:attribute name="loadPostSalePolicyResponse" type="Object" description ="" />
+    <aura:attribute name="loadPostSalePolicyMessage" type="Object" description ="" />    
+
+    <aura:attribute name="BaseURL" type="String"/>
+    <aura:attribute name="APIResponse" type="String" />
+  
+    <!-- ## API Error Modal ## -->
+    <aura:attribute name="errorModalToggle" type="Boolean" default="false" description="Hide/Show the error message modal for API issues" />
+    <aura:attribute name="errorModalMessage" type="List" default="" />
+    <aura:attribute name="errorModalTitle" type="String" default="" description="Holds latest error title from the APIs" />  
+    
+    <div class="slds-row">
+        <div class="slds-col slds-size_1-of-3" style="display:inline-block;">
+      
+            <lightning:button variant="Neutral" label="Edit Enrollment" title="Edit Enrollment" onclick="{!c.EditEnrollmentWizard}" />  
+        </div>
+        <div class="slds-col slds-size_2-of-3" style="display:inline-block;">
+            <aura:if isTrue="{!v.isEnrollment}">
+                <!--<lightning:button variant="Neutral" label="Resend Confirmation Email" title="Resend Confirmation Email" onclick="{!c.resendConfirmation}" />-->
+                <lightning:button variant="Neutral" label="Resend Confirmation Email" title="Resend Confirmation Email" onclick="{!c.displaySendConfirmationEmailModal}" />
+                
+                <lightning:button variant="Neutral" label="Enroll Again" title="Enroll Again" onclick="{!c.EnrollAgainHandler}" />
+                
+                <aura:set attribute="else">
+                    <!--<lightning:button variant="Neutral" label="Resend Quote Email" title="Send Policy Quote Email" onclick="{!c.sendQuoteEmail}" />-->
+                    <lightning:button variant="Neutral" label="Resend Quote Email" title="Send Policy Quote Email" onclick="{!c.displaySendQuoteEmailModal}" />
+                </aura:set>
+            </aura:if>               
+        </div>        
+    </div>
+    <div class="slds-row slds-p-around_medium">
+    	{!v.APIResponse}
+    </div>
+
+    <div aura:id="sendQuoteModal" class="slds-hide">
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <h2 class="slds-text-heading_medium slds-hyphenate">Resend Email</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <div class="slds-p-around_large">
+                        <lightning:input aura:id="quoteEmailInput" label="Email" type="text" value="{!v.quoteEmail}" minlength="5" required="true"
+                                         messageWhenTooShort="Please provide a valid email address"  />
+                    </div>
+
+                    <div class="slds-p-around_medium">
+                        <p>{!v.APIResponse}</p>
+                    </div>
+
+
+
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning:layout horizontalAlign="end">
+                        <lightning:layoutItem padding="around-small">
+                            <lightning:button variant="brand" label="Send" onclick="{!c.sendQuoteEmail}"/>
+                        </lightning:layoutItem>
+                        <lightning:layoutItem padding="around-small">
+                            <lightning:button variant="neutral" label="Cancel" onclick="{!c.closeModal}"/>
+                        </lightning:layoutItem>
+                    </lightning:layout>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </div>
+
+    <div aura:id="sendConfirmationModal" class="slds-hide">
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <h2 class="slds-text-heading_medium slds-hyphenate">Resend Email</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <div class="slds-p-around_large">
+                        <lightning:input aura:id="agentEmail" label="Agent Email" type="text" value="{!v.agentEmail}" minlength="5"
+                                         messageWhenTooShort="Please provide a valid email address"  />
+                        <br/>
+                        <div aura:id="nonGroupPlans" class="{! v.record.Plan_Type__c == 'Groups' ? 'slds-hide' : '' }">
+                            <lightning:input aura:id="confirmEmail1" label="Customer Email" type="text" value="{!v.confirmEmail1}" minlength="5"
+                                             messageWhenTooShort="Please provide a valid email address"  />
+                            <br/>
+                            <lightning:input aura:id="confirmEmail2" label="Customer Email" type="text" value="{!v.confirmEmail2}" minlength="5"
+                                             messageWhenTooShort="Please provide a valid email address" />
+                        </div>
+                    </div>
+
+                    <div class="slds-p-small">
+                        <p>{!v.APIResponse}</p>
+                    </div>
+
+
+
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning:layout horizontalAlign="end">
+                        <lightning:layoutItem padding="around-small">
+                            <lightning:button variant="brand" label="Send" onclick="{!c.resendConfirmation}"/>
+                        </lightning:layoutItem>
+                        <lightning:layoutItem padding="around-small">
+                            <lightning:button variant="neutral" label="Cancel" onclick="{!c.closeModal}"/>
+                        </lightning:layoutItem>
+                    </lightning:layout>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </div>
+    
+    <!-- ########## Exit confirmation Number modal ########## -->
+    <div role="dialog" tabindex="-1" aria-labelledby="header43" aura:id="confirm_window" class="slds-modal slds-modal_large">
+        <div class="slds-modal__container" style="width: 65%;">
+            <div class="slds-modal__header">
+               <lightning:buttonIcon iconName="utility:close" onclick="{!c.closeConfirmationNumberModal}" alternativeText="Close" variant="bare-inverse" class="slds-modal__close"/>                                
+                <h3 style="font-size: 1rem;"  title="Edit Enrollment">Edit Enrollment</h3>
+            </div> 
+            <div class="slds-modal__content slds-p-around--medium">
+                <div class="slds-p-left_xx-large slds-p-right_xx-large">
+                    <h3 style="font-size: 1rem;" title="{!v.recordTypeMsg}">{!v.recordTypeMsg}</h3>
+                </div>                  
+            </div>   
+            <div class="slds-modal__footer">
+                <ui:button label="Cancel" press="{!c.closeConfirmationNumberModal}" class="slds-button slds-button_brand" />
+            </div>            
+        </div>
+    </div>
+    <div class="slds-backdrop " aura:id="confirm_window_backdrop"></div>    
+    
+    
+</aura:component>

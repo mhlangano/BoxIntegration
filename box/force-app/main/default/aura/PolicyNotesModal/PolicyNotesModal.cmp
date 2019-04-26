@@ -1,0 +1,120 @@
+<aura:component access="global">
+    <aura:registerEvent name="savepolicy" type="c:PolicyNotesModalEvent"/>  
+
+    <aura:attribute name="title" type="String" default="Enrollment"/>
+    <aura:attribute name="message" type="String" />
+    
+    <aura:attribute name="showHideModal" type="String" default="slds-hide"/>           
+    <aura:attribute name="modalReply" type="String" default=""/> 
+
+	<aura:attribute name="yesButton" type="String" default="slds-hide"/> 
+    <aura:attribute name="noButton" type="String" default="slds-hide"/> 
+    <aura:attribute name="cancelButton" type="String" default="slds-hide"/> 
+    <aura:attribute name="saveButton" type="String" default="slds-hide"/> 
+    
+    <aura:attribute name="recordStatus" type="String" default="Quote"/> 
+	
+    <div class="{!'slds-row ' + v.showHideModal}"> 
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open" >
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <lightning:buttonIcon iconName="utility:close" onclick="{!c.cancelModalHandler}" alternativeText="close" variant="bare-inverse" class="slds-modal__close"/>
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!v.title}</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                
+                    <aura:if isTrue="{!v.recordStatus == 'Enrollment'}">
+                        <!-- Record Status equals Enrollment -->
+                        <div class="slds-row">
+                            <div class="flex-center slds-col--padded">
+                                <lightning:button aura:id="premRef" onclick="{!c.policyTransferCommentHandler}" label="PREM REF"/>
+                                <lightning:button aura:id="adjustDate" onclick="{!c.policyTransferCommentHandler}" label="ADJUST DATE"/>
+                                <lightning:button aura:id="incTripCost" onclick="{!c.policyTransferCommentHandler}" label="INC TRIP COST"/>
+                                <lightning:button aura:id="decrTripCost" onclick="{!c.policyTransferCommentHandler}" label="DECR TRIP COST"/>
+                                <lightning:button aura:id="tripCanByTO" onclick="{!c.policyTransferCommentHandler}" label="TRIP CAN BY TO"/>
+                                <lightning:button aura:id="addADD" onclick="{!c.policyTransferCommentHandler}" label="ADD AD&amp;D"/>                            
+                            </div>
+                        </div>
+                        <div class="slds-row">
+                            <div class="flex-center slds-col--padded">                                                                
+                                <lightning:button aura:id="addCRC" onclick="{!c.policyTransferCommentHandler}" label="ADD CRC"/>
+                                <lightning:button aura:id="duplicate" onclick="{!c.policyTransferCommentHandler}" label="DUPLICATE"/>                                
+                                <lightning:button aura:id="benChg" onclick="{!c.policyTransferCommentHandler}" label="BEN CHG"/>
+                                <lightning:button aura:id="asPerPax" onclick="{!c.policyTransferCommentHandler}" label="AS PER PAX"/>
+                                <lightning:button aura:id="asPerTA" onclick="{!c.policyTransferCommentHandler}" label="AS PER TA"/>                          
+                                <lightning:button aura:id="correctedAddr" onclick="{!c.policyTransferCommentHandler}" label="CORRECTED ADDR"/>
+                                <lightning:button aura:id="claims" onclick="{!c.policyTransferCommentHandler}" label="CLAIMS"/>
+                                <lightning:button aura:id="dupcon" onclick="{!c.policyTransferCommentHandler}" label="DUPCON"/>   
+                                 <lightning:button aura:id="noClaims" onclick="{!c.policyTransferCommentHandler}" label="NO CLAIMS"/>
+                            </div>
+                        </div>                               
+                        <div class="slds-row">
+                            <div class="flex-center slds-col--padded">                               
+                                <lightning:button aura:id="noPenalties" onclick="{!c.policyTransferCommentHandler}" label="NO PENALTIES"/>
+                                <lightning:button aura:id="dT6moApplied" onclick="{!c.policyTransferCommentHandler}" label="DT 6MO APPLIED"/>                      
+                                <lightning:button aura:id="dT6moNotApplied" onclick="{!c.policyTransferCommentHandler}" label="DT 6MO NOT APPLIED"/>
+                                <lightning:button aura:id="dT12moApplied" onclick="{!c.policyTransferCommentHandler}" label="DT 12MO APPLIED"/>
+                                <lightning:button aura:id="dT12moNotApplied" onclick="{!c.policyTransferCommentHandler}" label="DT 12MO NOT APPLIED"/>                        
+                                <lightning:button aura:id="cancelCompliance" onclick="{!c.policyTransferCommentHandler}" label="CANCEL COMPLIANCE"/>
+                            </div>
+                        </div>                        
+                    </aura:if>
+                    <aura:if isTrue="{!v.recordStatus == 'Quote' || v.recordStatus == 'Saved Quote'}">
+                        <div class="slds-row">
+                            <div class="flex-center slds-col--padded">
+                                <lightning:button aura:id="sWagent" onclick="{!c.policyTransferCommentHandler}" label="S/WAGENT"/>                                
+                                <lightning:button aura:id="sWPax" onclick="{!c.policyTransferCommentHandler}" label="S/WPAX"/>
+                                <lightning:button aura:id="preWaive" onclick="{!c.policyTransferCommentHandler}" label="PREWAIVE"/>
+                                <lightning:button aura:id="findEf" onclick="{!c.policyTransferCommentHandler}" label="FINDEF"/>
+                                <lightning:button aura:id="upgrddec" onclick="{!c.policyTransferCommentHandler}" label="UPGRADDEC"/>
+                                <lightning:button aura:id="visa" onclick="{!c.policyTransferCommentHandler}" label="VISA"/>                           
+                            </div>
+                        </div>
+                        <aura:if isTrue="{!v.recordStatus == 'Quote'}">
+                            <div class="slds-row"> 
+                                <div class="flex-center slds-col--padded">                                 
+                                    <lightning:button aura:id="cfBr" onclick="{!c.policyTransferCommentHandler}" label="CFBR"/>
+                                    <lightning:button aura:id="effDt" onclick="{!c.policyTransferCommentHandler}" label="EFFDT"/>
+                                    <lightning:button aura:id="upGrdacc" onclick="{!c.policyTransferCommentHandler}" label="UPGRDACC"/>
+                                    <lightning:button aura:id="kip" onclick="{!c.policyTransferCommentHandler}" label="KIP"/>
+                                    <lightning:button aura:id="docs" onclick="{!c.policyTransferCommentHandler}" label="DOCS"/>
+                                    <lightning:button aura:id="cfar" onclick="{!c.policyTransferCommentHandler}" label="CFAR"/>                            
+                                    <lightning:button aura:id="cuba" onclick="{!c.policyTransferCommentHandler}" label="CUBA"/> 
+                                </div>
+                            </div>   
+                        </aura:if>
+                    </aura:if>
+                    <aura:if isTrue="{!v.recordStatus == 'Saved Quote'}">
+                    </aura:if>                    
+		
+                <div class="slds-row">
+                    <div class="flex-center slds-col--padded">
+                        <lightning:textarea type="text" aura:id="comments" label="Comments"  style="width: 90%;" maxlength="300" onkeyup="{!c.policyTransferCommentHandler}"/>  
+                    </div>    
+                </div>                    
+                </div> 
+                <footer class="slds-modal__footer">  
+                        <lightning:button variant="neutral" label="Cancel" title="Cancel" onclick="{!c.cancelModalHandler}" /> 
+                        <lightning:button variant="neutral" label="Ok" aura:id="okButton" title="No" onclick="{!c.savePolicyHandler}" disabled="true" class="slds-button slds-button_outline-brand"/>                      
+                </footer>
+            </div>
+        </section>        
+     
+        <div class="slds-backdrop slds-backdrop_open"></div> 
+    	</div>
+    
+        <!-- Cancel Confirmation Modal -->
+        <div role="dialog" tabindex="-1" aria-labelledby="header43" aura:id="policy_change_save_window" class="slds-modal slds-modal_large">
+            <div class="slds-modal__container" style="width: 80%;">
+               <header class="slds-modal__header">
+                   <lightning:buttonIcon iconName="utility:close" onclick="{!c.returnToEnrollmentHandler}" alternativeText="Close" variant="bare-inverse" class="slds-modal__close"/>
+                                       
+                   <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Policy Changes Not Saved</h2>
+               </header>               
+                <div class="slds-modal__footer">
+                    <ui:button label="Ok" press="{!c.returnToEnrollmentHandler}" class="slds-button slds-button_outline-brand" />
+                </div>
+            </div>
+        </div>     
+        <div class="slds-backdrop " aura:id="policy_change_save_backdrop"></div>       
+</aura:component>

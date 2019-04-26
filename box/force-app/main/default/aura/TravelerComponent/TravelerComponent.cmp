@@ -1,0 +1,177 @@
+<aura:component access="global" controller="EnrollmentWizardController">
+    
+    <aura:attribute name="Traveler" type="Traveler__c" />
+    
+    <aura:attribute name="RowIndex" type="String" default="0" />
+    <aura:attribute name="CompactDisplay" type="Boolean" default="false" />
+    <aura:attribute name="Disabled" type="Boolean" default="false" />
+    <aura:attribute name="groupPlan" type="Boolean" default="false" />
+    
+    <aura:attribute name="CountryOptions" type="List" />
+    <aura:attribute name="StateOptions" type="List" />
+    <aura:attribute name="AgeCategory" type="List" />
+    <aura:attribute name="StateChoice" type="String" />
+       
+    <aura:registerEvent name="TravelerEvent" type="c:TravelerComponentEvent" />
+    <aura:attribute name="PurchasedProduct" type="Object" default="{isRetail: false, isFlight:false, isUseYear: false, isGroupProduct:false, isStudentGroup: false, enableDOB: false, enableSavedQuotes:false, isAddressRequired:false, requireState:false}" description="For determining fields user should see on Traveler child component based on products selected-MK"/>
+    <aura:handler name="init" value="{!this}" action="{!c.changeDisplayedFields}"/> 
+    <aura:handler name="change" value="{!v.PurchasedProduct}" action="{!c.changeDisplayedFields}"/>
+         
+    <div data-type="traveler" style="border-radius: 40px;">
+        <!-- Header Row - Label, delete button -->
+        <div class="slds-row">
+            <div class="slds-col--padded slds-size_1-of-3">
+                <span><strong>Traveler - #{!v.RowIndex + 1}</strong><aura:if isTrue="{!v.Traveler.Is_Primary__c}">&nbsp;(Primary)</aura:if></span>
+            </div>
+            
+            <div class="slds-col--padded slds-size_1-of-3 slds-text-align_center">
+                <aura:renderIf isTrue="{!v.groupPlan == false}">
+                    <lightning:input aura:id="primary_traveler" type="checkbox" label="Primary Traveler" checked="{!v.Traveler.Is_Primary__c}" disabled="{!v.Disabled}" onchange="{!c.selectedAsPrimary}"/> 		                                                                     					                                               
+                </aura:renderIf>
+            </div>
+            
+            <div class="slds-col--padded slds-size_1-of-3">
+                <a aura:id="deleteIcon" onclick="{!c.deleteTraveler}" class="slds-float_right">
+                    <lightning:icon variant="error" iconName="utility:delete" class="slds-icon slds-icon_small" size="small" alternativeText="Delete"/>
+                    <span class="slds-assistive-text">Delete</span>
+                </a>
+            </div>
+        </div>
+        
+        <aura:renderIf isTrue="{!v.CompactDisplay == true}">
+            <!-- This is the compact view (Travel Details Tab) -->
+            <div class="slds-row">
+                <div class="slds-size_1-of-2 slds-col--padded">
+                    	<ui:inputDate  aura:id="date_of_birth" label="Date of Birth" class="" required="true" blur="{!c.validateChanges}" value="{!v.Traveler.Date_of_Birth__c}" displayDatePicker="true" format="MM/DD/YYYY" requiredIndicatorClass="slds-required" />
+                    <div aura:id="validate_date_of_birth" class="slds-hide error-text">Date of Birth cannot be in future</div>
+                </div>
+                <div class="slds-size_1-of-2 slds-col--padded">
+                    <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left">
+                         <div class="slds-icon slds-input__icon slds-input__icon_left slds-icon-text-default" style="padding-top: 12px;">$</div>
+                         <lightning:input type="number" aura:id="trip_cost" value="{!v.Traveler.Trip_Cost__c}" label="Trip Cost" onblur="{!c.validateChanges}" required="true" step="0.01" />
+                    </div>                      
+                </div>
+            </div>
+            
+            <!-- This is the full view (Primary Traveler Tab) -->
+            <aura:set attribute="else">
+                <div class="slds-row">
+                    <div class="slds-size_1-of-5 slds-col--padded">
+                        <ui:inputText aura:id="first_name" label="First Name" class="slds-input" value="{!v.Traveler.First_Name__c}" change="{!c.validateChanges}" disabled="{!v.Disabled}"/>
+                    </div>
+                    <div class="slds-size_1-of-5 slds-col--padded">
+                        <ui:inputText aura:id="last_name" label="Last Name" class="slds-input" value="{!v.Traveler.Last_Name__c}" change="{!c.validateChanges}" disabled="{!v.Disabled}"/>
+                    </div>
+                    
+                     
+                    
+                    <div class="slds-size_1-of-5 slds-col--padded slds-hide" aura:id="date_of_birthDiv">
+                        <ui:inputDate aura:id="date_of_birth" label="Date of Birth" class="slds-input" required="true" blur="{!c.validateChanges}" value="{!v.Traveler.Date_of_Birth__c}" displayDatePicker="true" format="MM/DD/YYYY" requiredIndicatorClass="slds-required" disabled="{!v.Disabled}" />
+                    </div>
+ 
+                    <div class="slds-size_1-of-5 slds-col--padded slds-hide" aura:id="age_categoryDiv">                                       
+                            <ui:inputSelect aura:id="age_category" label="Age Category" value="{!v.Traveler.Age_Category__c}" class="slds-input" change="{!c.validateChanges}" disabled="{!v.Disabled}" >
+                                <aura:iteration items="{!v.AgeCategory}" var="age">
+                                    <ui:inputSelectOption text="{!age.value}" label="{!age.label}" />
+                                </aura:iteration>
+                            </ui:inputSelect>                        
+                    </div>                    
+                                        
+                                        
+                    <div class="slds-size_1-of-5 slds-col--padded slds-hide" aura:id="ageDiv">
+                        <ui:inputNumber aura:id="calculated_age" label="Calculated Age" class="slds-input" value="{!v.Traveler.Calculated_Age__c}" disabled="true"/>
+                    </div>
+                    
+                    
+                    <div class="slds-size_1-of-5 slds-col--padded slds-hide"  aura:id="trip_costDiv">
+                        <ui:inputNumber aura:id="trip_cost" label="Trip Cost" class="slds-input" required="true" blur="{!c.validateChanges}" value="{!v.Traveler.Trip_Cost__c}" format=".00" disabled="{!v.Disabled}"/>
+                    </div>
+                    <div class="slds-size_1-of-5 slds-col--padded slds-hide" aura:id="total_Plan_CostDiv">
+                        <ui:inputText aura:id="total_Plan_Cost" label="Total Plan Cost" value="{!v.Traveler.Total_Plan_Cost__c}" class="slds-input" change="{!c.validateChanges}" disabled="{!v.Disabled}"/>
+                    </div>                     
+                </div> 
+                 
+                <div class="slds-row  slds-hide" aura:id="groupRow1">
+             
+             
+                       
+                    <div class="slds-size_1-of-5 slds-col--padded" >
+                    	<lightning:input aura:id="cfar" type="checkbox" label="CFAR" checked="{!v.Traveler.CFAR__c}" disabled="{!v.Disabled}" onchange="{!c.validateChanges}" /> 		                                                                     					                                                                                  
+                    </div>
+                    <div class="slds-size_1-of-5 slds-col--padded">
+                        <ui:inputText aura:id="cancelReasonCost" label="Cancel for Any Reason Cost" value="{!v.Traveler.Cancel_for_Any_Reason_Cost__c}" class="slds-input" change="{!c.validateChanges}" disabled="{!v.Disabled}"/>
+                    </div>                                        
+                </div>
+                <div class="slds-row  slds-hide" aura:id="groupRow2">                         
+                    <br/>
+ 
+                    <div class="slds-size_1-of-4 slds-col--padded" >
+                    	<ui:inputDate label="Departure Date" class="slds-input" blur="{!c.validateChanges}" value="{!v.Traveler.Departure_Date__c}" displayDatePicker="true" format="MM/DD/YYYY" requiredIndicatorClass="slds-required" disabled="{!v.Disabled}" />                    		                                                                     					                                                                                  
+                    </div>
+                    <div class="slds-size_1-of-4 slds-col--padded" >
+                    	<ui:inputDate label="Return Date" class="slds-input" blur="{!c.validateChanges}" value="{!v.Traveler.Return_Date__c}" displayDatePicker="true" format="MM/DD/YYYY" requiredIndicatorClass="slds-required" disabled="{!v.Disabled}" />                    		                                                                     					                                                                                  
+                    </div>      
+                    <div class="slds-size_1-of-4 slds-col--padded" >
+                    	<ui:inputDate label="Deposit Date" class="slds-input"  blur="{!c.validateChanges}" value="{!v.Traveler.Deposit_Date__c}" displayDatePicker="true" format="MM/DD/YYYY" requiredIndicatorClass="slds-required" disabled="{!v.Disabled}" />                    		                                                                     					                                                                                  
+                    </div>
+                    <div class="slds-size_1-of-4 slds-col--padded" >
+                    	<ui:inputDate label="Premium Paid Date" class="slds-input" blur="{!c.validateChanges}" value="{!v.Traveler.Premium_Paid_Date__c}" displayDatePicker="true" format="MM/DD/YYYY" requiredIndicatorClass="slds-required" disabled="{!v.Disabled}" />                    		                                                                     					                                                                                  
+                    </div>                     
+                </div> 
+                                
+                <!-- If this is the Primary traveler, we show address fields -->
+                <aura:renderIf isTrue="{!v.Traveler.Is_Primary__c == true || v.groupPlan == true}">
+                    <div class="slds-row" >
+              
+                        <br/>
+                        <br/>
+                        <div class="slds-size_1-of-2 slds-col--padded slds-hide" aura:id="address1Div">
+                            <ui:inputText aura:id="address_1" label="Address 1" value="{!v.Traveler.Address_1__c}" class="slds-input" change="{!c.validateChanges}" disabled="{!v.Disabled}"/>
+                        </div>
+                        <div class="slds-size_1-of-2 slds-col--padded slds-hide" aura:id="address2Div">
+                            <ui:inputText aura:id="address_2" label="Address 2" value="{!v.Traveler.Address_2__c}" class="slds-input" change="{!c.validateChanges}" disabled="{!v.Disabled}"/>
+                        </div>
+                    </div>
+                    <div class="slds-row"> 	
+                        <div class="slds-size_1-of-4 slds-col--padded slds-hide"  aura:id="cityDiv">
+                            <ui:inputText aura:id="city" label="City" value="{!v.Traveler.City__c}" class="slds-input" change="{!c.validateChanges}" disabled="{!v.Disabled}"/>
+                        </div>
+                        <div class="slds-size_1-of-4 slds-col--padded slds-hide" aura:id="stateDiv">
+                          
+                            <ui:inputSelect aura:id="state_select" value="{!v.StateChoice}" label="State" class="slds-input" change="{!c.validateStateChange}" disabled="{!v.Disabled}">
+                                <aura:iteration items="{!v.StateOptions}" var="state">
+                                    <ui:inputSelectOption text="{!state.value}" label="{!state.label}" />
+                                </aura:iteration>
+                            </ui:inputSelect>
+                    
+                            <!--<select aura:id="state_select" value="{!v.Traveler.State__c}" label="State" class="slds-input" onchange="{!c.validateStateChange}" disabled="{!v.Disabled}">
+                                <aura:iteration items="{!v.StateOptions}" var="state">
+                                    <option text="{!state.value}" label="{!state.label}" />
+                                </aura:iteration>
+                            </select> -->
+                            <div aura:id="state_required_label" class="slds-text-color_error slds-p-left_x-small slds-hide">State of Residency required.</div>
+                        </div>	
+                        <div class="slds-size_1-of-4 slds-col--padded slds-hide" aura:id="zipDiv">
+                            <ui:inputText aura:id="zip_code" label="Zip Code" value="{!v.Traveler.Zip_Code__c}" class="slds-input" change="{!c.validateChanges}" disabled="{!v.Disabled}"/>
+                        </div>	
+                        <div class="slds-size_1-of-4 slds-col--padded slds-hide"  aura:id="countryDiv">
+                            <ui:inputSelect aura:id="country_select" value="{!v.Traveler.Country__c || null}" label="Country" class="slds-input" change="{!c.validateCountryChange}" disabled="{!v.Disabled}">
+                                <aura:iteration items="{!v.CountryOptions}" var="country">
+                                    <ui:inputSelectOption text="{!country.value}" label="{!country.label}" /> <!--  value="{!country.selected}" -->
+                                </aura:iteration>
+                            </ui:inputSelect>
+                        </div>
+                    </div>
+                    <div class="slds-row"> 
+                        <div class="slds-size_1-of-5 slds-col--padded slds-hide" aura:id="traveler_phoneDiv">
+                            <ui:inputPhone aura:id="traveler_phone" label="Phone" value="{!v.Traveler.Phone__c}" class="slds-input"  change="{!c.validateChanges}" disabled="{!v.Disabled}"/>
+                        </div>
+                        <div class="slds-size_1-of-5 slds-col--padded " aura:id="traveler_emailDiv">
+                            <ui:inputEmail aura:id="traveler_email" label="Email" value="{!v.Traveler.Traveler_Email__c}" class="slds-input" disabled="{!v.Disabled}" change="{!c.validateChanges}"/>
+                        </div>                        
+                    </div>
+                </aura:renderIf>
+            </aura:set>
+        </aura:renderIf>
+    </div>
+</aura:component>

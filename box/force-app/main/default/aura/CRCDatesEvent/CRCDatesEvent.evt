@@ -1,0 +1,6 @@
+<aura:event type="COMPONENT" description="Event to pass data from CRC components into product card" >
+    <aura:attribute name="index" type="Integer" description="the row index of this component instance in the parent list"/>
+    <aura:attribute name="instance" type="Object" description="the crc date instance"/>
+    
+    <aura:attribute name="Action" type="String" />
+</aura:event>

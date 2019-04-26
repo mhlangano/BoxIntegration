@@ -1,0 +1,8 @@
+<aura:event type="COMPONENT" description="">
+    <aura:attribute name="ProductInfo" type="Object"/>
+    <aura:attribute name="CRCDates" type="List"/>
+    <aura:attribute name="Upgrades" type="List"/>
+    <aura:attribute name="TotalCost" type="Double"/>
+    <aura:attribute name="DeliveryScript" type="String"/>
+    <aura:attribute name="Action" type="String"/>
+</aura:event>

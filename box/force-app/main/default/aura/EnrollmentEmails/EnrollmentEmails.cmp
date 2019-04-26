@@ -1,0 +1,14 @@
+<aura:component controller="EnrollmentWizardController" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickAction" access="global" >          
+    <aura:attribute name="record" type="Object" />
+    <force:recordData aura:id="recordLoader" 
+                      recordId="{!v.recordId}" 
+                      fields="Record_Status__c,Agent_Email__c,Email1__c,Email2__c,Confirmation_Number__c,Quote_Number__c" 
+                      targetFields="{!v.record}" />
+    
+    <aura:if isTrue="{!v.record.Record_Status__c == 'Enrollment'}">
+        <lightning:button variant="Neutral" label="Resend Confirmation Email" title="Resend Confirmation Email" onclick="" />
+    	<aura:set attribute="else">
+	        <lightning:button variant="Neutral" label="Resend Quote Email" title="Resend Quote Email" onclick="" />
+        </aura:set>
+    </aura:if>
+</aura:component>

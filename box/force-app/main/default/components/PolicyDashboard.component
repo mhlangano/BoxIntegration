@@ -1,0 +1,29 @@
+<apex:component controller="ctrl_PolicyDashboard" >
+	
+	<apex:attribute name="RID" description="ID of the Related To ID"
+		type="ID" assignTo="{!UID}" />
+
+	<apex:outputPanel style="width:1075px;" layout="block">
+			<apex:actionSupport event="onclick" action="{!goToReport}"/>
+
+			<apex:chart height="250" width="1060px" data="{!FinancialHistory10}">
+				<apex:legend position="left"/>
+				<apex:axis type="Category" position="bottom" fields="name"
+					title="Monthly Total" />
+						
+				<apex:axis type="Numeric" position="left" fields="Year_1,Year_2" 
+					title="Policy Count Total" grid="true" />	
+					
+				<apex:lineSeries title="{!currentYear} Policies" axis="left" xField="name" yField="Year_1"
+      				  fill="true" markerType="cross" markerSize="4" markerFill="#FF0000"/>
+      			<apex:lineSeries title="{!year2} Policies" axis="left" xField="name" yField="Year_2"
+      				  fill="true" markerType="cross" markerSize="4" markerFill="#00FF00"/>
+      			<apex:lineSeries title="{!year3} Policies" axis="left" xField="name" yField="Year_3"
+      				  fill="true" markerType="cross" markerSize="4" markerFill="#0000FF"/>	  
+	    	  	  
+			</apex:chart>
+			<apex:outputPanel layout="block" style="float:left"> 
+				
+			</apex:outputPanel>
+	</apex:outputPanel>
+</apex:component>

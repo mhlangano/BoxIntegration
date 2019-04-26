@@ -1,0 +1,21 @@
+.THIS .dollar{
+    display:inline-block;
+	position: relative;
+}
+.THIS .dollar input{
+	padding-left:25px;
+}
+.THIS .dollar:before {
+	position: absolute;
+    content:"$";
+    left:12px;
+	top:11px; 
+    color:#514f4d;
+}
+.THIS .fullwidth{
+    width:100% !important;
+}
+.THIS [class*=slds-size_] {
+    display: inline-block;
+    padding: 0.25em;
+}

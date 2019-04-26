@@ -1,0 +1,20 @@
+<apex:page standardController="Account"  extensions="ext_DashboardViewer" >
+    
+    
+<apex:chart height="250" width="750" data="{!FinancialHistory10}">
+            <apex:legend position="left"/>
+            <apex:axis type="Category" position="bottom" fields="name"
+                title="Monthly Total" />
+            <apex:axis type="Numeric" position="left" fields="Year_1,Year_2" 
+                title="Premium Total" grid="true" />    
+            <apex:lineSeries title="{!currentYear} Premiums" axis="left" xField="name" yField="Year_1"
+                      fill="true" markerType="cross" markerSize="4" markerFill="#FF0000" />
+            <apex:lineSeries title="{!year2} Premiums" axis="left" xField="name" yField="Year_2"
+                      fill="true" markerType="cross" markerSize="4" markerFill="#00FF00"/>
+            <apex:lineSeries title="{!year3} Premiums" axis="left" xField="name" yField="Year_3"
+                      fill="true" markerType="cross" markerSize="4" markerFill="#0000FF"  /> 
+                  
+          
+        </apex:chart>
+    
+</apex:page>

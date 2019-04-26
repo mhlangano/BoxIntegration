@@ -1,0 +1,59 @@
+<apex:page controller="MeetingsController">
+<apex:pageMessages />
+<apex:form > 
+        
+
+                        <apex:actionRegion >
+                        <apex:pageBlock title="Scheduled Meetings" id="meetTable">  
+                                       
+                            <apex:pageBlockSection columns="1">                    
+                                <apex:pageBlockTable value="{!Meetings}" var="mtgs" >                                                               
+                                    <apex:column headerValue="Cancel?">
+                                        <apex:outputLink value="/flow/Cancel_ConfMeet?ConfMeetID={!mtgs.MeetId}&retURL=/apex/Meetings">Cancel</apex:outputLink>
+                                    </apex:column>
+                                    <apex:column headerValue="Meeting Day">
+                                        <apex:outputText value="{0,date,EEEEE}"> 
+                                            <apex:param value="{!mtgs.MeetDateTime}" /> 
+                                        </apex:outputText>                                          
+                                    </apex:column> 
+                                    <apex:column headerValue="Meeting Time">
+                                        <apex:outputText value="{!mtgs.MeetDateTime2}"/> 
+                                    </apex:column>                                     
+                                    <apex:column headerValue="Appt #">
+                                        <apex:outputText value="{!mtgs.MeetApptNum}"/>
+                                    </apex:column> 
+                                    <apex:column headerValue="Table #">
+                                        <apex:outputText value="{!mtgs.MeetTable}"/>
+                                    </apex:column> 
+                                    <apex:column headerValue="Agency Name">
+                                        <apex:outputText value="{!mtgs.UpAgncyName}"/>
+                                    </apex:column>      
+                                    <apex:column headerValue="Location Numbers">
+                                        <apex:outputText value="{!mtgs.UpLocNums}"/>
+                                    </apex:column>                                                                    
+                                    <apex:column headerValue="Meeting With">
+                                        <apex:outputText value="{!mtgs.MeetList}"/>
+                                    </apex:column>                                                       
+                                    <apex:column headerValue="1st Agency Link">
+                                        <apex:outputLink value="/flow/Sales_Interview?LocNum={!mtgs.Agency0LocNum}&MeetingID={!mtgs.MeetId}&retURL=/apex/Meetings">{!mtgs.Agency0LocNum}</apex:outputLink>
+                                    </apex:column>                                                                                                                                                   
+                                    <!----
+                                    <apex:column headerValue="2nd Agency Link">
+                                        <apex:outputLink value="/flow/Sales_Interview?LocNum={!mtgs.Agency1LocNum}&MeetingID={!mtgs.MeetId}&retURL=/apex/Meetings">{!mtgs.Agency1LocNum}</apex:outputLink>
+                                    </apex:column>                                     
+                                    <apex:column headerValue="3rd Agency Link">
+                                        <apex:outputLink value="/flow/Sales_Interview?LocNum={!mtgs.Agency2LocNum}&MeetingID={!mtgs.MeetId}&retURL=/apex/Meetings">{!mtgs.Agency2LocNum}</apex:outputLink>
+                                    </apex:column>
+                                    --->
+                                    <apex:column headerValue="Only Notes">
+                                        <apex:outputLink value="/flow/Sales_Week_Event_Logger?pre_Location_Number={!mtgs.Agency0LocNum}&ConfMeetID={!mtgs.MeetId}&retURL=/apex/Meetings">Notes</apex:outputLink>
+                                    </apex:column>                                                                          
+                                </apex:pageBlockTable>                    
+                            </apex:pageBlockSection>                  
+                          
+                        </apex:pageBlock>
+                        </apex:actionRegion> 
+ 
+        
+</apex:form> 
+</apex:page>

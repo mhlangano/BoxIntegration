@@ -1,0 +1,6 @@
+<aura:event type="COMPONENT" description="Custom Lookup component event let's parents know when fields are cleared or filled.">
+    <aura:attribute name="SelectedRecord" type="sObject" />
+    <aura:attribute name="ObjectType" type="String" />
+    <aura:attribute name="FieldName" type="String" />
+    <aura:attribute name="Action" type="String" />
+</aura:event>

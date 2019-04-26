@@ -1,0 +1,48 @@
+<aura:component access="global">
+    <aura:handler name="init" action="{!c.initialize}" value="{!this}" />
+    <aura:registerEvent name="CRCDatesEvent" type="c:CRCDatesEvent" />
+    
+    <aura:attribute name="CRCDatesInstance" type="Car_Rental_Collision__c" default="{'sobjectType': 'Car_Rental_Collision__c', 'CRC_Start_Date__c' : '','CRC_End_Date__c' : ''}"/>    
+    <aura:attribute name="EnrollmentData" type="Object" default="{'Departure_Date__c': null, 'Return_Date__c': null}"/>
+    
+    <aura:attribute name="datesRowIndex" type="String" default="0"/>	
+    <aura:attribute name="startDateError" type="String" default=""/>
+    <aura:attribute name="pickUpDateError" type="String" default="slds-hide"/>
+    <aura:attribute name="dropOffDateError" type="String" default="slds-hide"/>
+    <aura:attribute name="blankDateError" type="String" default="slds-hide"/>
+    <aura:attribute name="blankField" type="String" default=""/>
+    <aura:attribute name="outOfBoundDate" type="String" default="slds-hide"/>
+    <aura:attribute name="outOfBoundDateName" type="String" default="String"/>
+    
+    
+    
+    <div data-type="crcdates">
+        <div class="{!'slds-row slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error ' + v.pickUpDateError}">
+            ERROR: 'Pick-up' date must be on or after the departing date.
+        </div>    
+        <div class="{!'slds-row slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error ' + v.dropOffDateError}">
+            ERROR:  'Drop off' date must be on or before the return date.
+        </div> 
+        <div class="{!'slds-row slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error ' + v.blankDateError}">
+            ERROR: {!v.blankField} required.
+        </div>         
+        <div class="{!'slds-row slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error ' + v.outOfBoundDate}">
+            ERROR: {!v.outOfBoundDateName}
+        </div>             
+        <div class='slds-row slds-clearfix'>
+            <span><b>CRC Date - #{!v.datesRowIndex + 1}</b></span>
+            <a aura:id="deleteIcon" onclick="{!c.deleteCRCDate}" class="slds-float_right"> 
+                <lightning:icon variant="error" iconName="utility:delete" class="slds-icon slds-icon_small" size="small" alternativeText="icon"/>
+                <span class="slds-assistive-text">Delete Icon</span>
+            </a>
+        </div>
+        <div class='slds-row'>
+            <div class="slds-size_1-of-2 slds-col__padded"> 
+                <ui:inputDate  aura:id="start_date" label="From Date" value="{!v.CRCDatesInstance.CRC_Start_Date__c}"  displayDatePicker="true" format="MM/DD/YYYY" updateOn="blur" change="{!c.validateDates}"/>
+            </div>
+            <div class="slds-size_1-of-2 slds-col__padded">
+                <ui:inputDate  aura:id="end_date" label="To Date" value="{!v.CRCDatesInstance.CRC_End_Date__c}"  displayDatePicker="true" format="MM/DD/YYYY" change="{!c.validateDates}"/>
+            </div>		
+        </div>              
+    </div>  
+</aura:component>

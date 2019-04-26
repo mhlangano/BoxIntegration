@@ -1,0 +1,382 @@
+<apex:page controller="ctrl_AccountOwnerDashboard" showHeader="False" Sidebar="False" contentType="application/vnd.ms-excel/#AccountPerformanceExport.xls" >
+
+
+		<apex:pageBlock id="pbTables" >
+
+			<apex:outputPanel style="width:1075px;overflow:scroll;" layout="block"> 
+				<apex:pageBlockTable value="{!financialData_List}" var="fd"   >
+			
+					<apex:column headerValue="Account" value="{!fd.actName}" />
+					
+					<apex:column headerValue=""   >
+						
+							<apex:pageBlockTable value="{!fd.pd01_List}" var="c"  style="white-space:nowrap;"  >	
+								<apex:facet name="caption" >
+									<b>January Performance</b>
+								</apex:facet>
+								<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;" />
+								
+								<apex:column headerValue="Premium" style="white-space:nowrap;" >
+									<apex:outputText value="$ {0, number, ###,###}"  >
+										<apex:param value="{!c.premium}" />
+									</apex:outputText>
+								</apex:column>
+								
+								<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};" >
+									<apex:outputText value="$ {0, number, ###,###}" >
+										<apex:Param value="{!c.varCash}" />
+									</apex:outputText>
+								</apex:column>
+								
+								<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};" />
+								
+							</apex:pageBlockTable>
+						
+					</apex:column>
+					
+					<apex:column headerValue="" >
+					
+						<apex:pageBlockTable value="{!fd.pd02_List}" var="c" >	
+						<apex:facet name="caption" >
+									<b>February Performance</b>
+								</apex:facet>
+							<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;"/>
+							<apex:column headerValue="Premium" style="white-space:nowrap;">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:param value="{!c.premium}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:Param value="{!c.varCash}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};"/>
+							
+						</apex:pageBlockTable>
+					</apex:column>
+					
+					<apex:column headerValue="" >
+						<apex:pageBlockTable value="{!fd.pd03_List}" var="c" >	
+							<apex:facet name="caption" >
+									<b>March Performance</b>
+								</apex:facet>
+							<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;" />
+							<apex:column headerValue="Premium" >
+								<apex:outputText value="$ {0, number, ###,###}" style="white-space:nowrap;" >
+									<apex:param value="{!c.premium}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:Param value="{!c.varCash}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};"/>
+							
+						</apex:pageBlockTable>
+					</apex:column>
+					
+					<apex:column headerValue="" >
+						<apex:pageBlockTable value="{!fd.pd04_List}" var="c" >	
+							<apex:facet name="caption" >
+									<b>April Performance</b>
+								</apex:facet>
+							<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;"/>
+							<apex:column headerValue="Premium" style="white-space:nowrap;">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:param value="{!c.premium}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:Param value="{!c.varCash}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};"/>
+							
+						</apex:pageBlockTable>
+					</apex:column>
+					
+					<apex:column headerValue="" >
+						<apex:pageBlockTable value="{!fd.pd05_List}" var="c" >	
+							<apex:facet name="caption" >
+									<b>May Performance</b>
+								</apex:facet>
+							<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;"/>
+							<apex:column headerValue="Premium" style="white-space:nowrap;">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:param value="{!c.premium}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:Param value="{!c.varCash}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};"/>
+							
+						</apex:pageBlockTable>
+					</apex:column>
+					
+					<apex:column headerValue="" >
+						<apex:pageBlockTable value="{!fd.pd06_List}" var="c" >
+							<apex:facet name="caption" >
+									<b>June Performance</b>
+								</apex:facet>	
+							<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;"/>
+							<apex:column headerValue="Premium" style="white-space:nowrap;">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:param value="{!c.premium}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:Param value="{!c.varCash}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};"/>
+							
+						</apex:pageBlockTable>
+					</apex:column>
+					
+					<apex:column headerValue="" >
+						<apex:pageBlockTable value="{!fd.pd07_List}" var="c" >	
+							<apex:facet name="caption" >
+									<b>July Performance</b>
+								</apex:facet>
+							<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;"/>
+							<apex:column headerValue="Premium" style="white-space:nowrap;">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:param value="{!c.premium}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:Param value="{!c.varCash}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};"/>
+							
+						</apex:pageBlockTable>
+					</apex:column>
+					
+					<apex:column headerValue="" >
+						<apex:pageBlockTable value="{!fd.pd08_List}" var="c" >	
+							<apex:facet name="caption" >
+									<b>August Performance</b>
+								</apex:facet>
+							<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;" />
+							<apex:column headerValue="Premium" style="white-space:nowrap;">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:param value="{!c.premium}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:Param value="{!c.varCash}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};"/>
+							
+						</apex:pageBlockTable>
+					</apex:column>
+					
+					<apex:column headerValue="" >
+						<apex:pageBlockTable value="{!fd.pd09_List}" var="c" >
+							<apex:facet name="caption" >
+									<b>September Performance</b>
+								</apex:facet>	
+							<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;"/>
+							<apex:column headerValue="Premium" style="white-space:nowrap;" >
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:param value="{!c.premium}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:Param value="{!c.varCash}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};"/>
+							
+						</apex:pageBlockTable>
+					</apex:column>
+					
+					<apex:column headerValue="" >
+						<apex:pageBlockTable value="{!fd.pd10_List}" var="c" >
+							<apex:facet name="caption" >
+									<b>October Performance</b>
+								</apex:facet>	
+							<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;"/>
+							<apex:column headerValue="Premium" style="white-space:nowrap;">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:param value="{!c.premium}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:Param value="{!c.varCash}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};"/>
+							
+						</apex:pageBlockTable>
+					</apex:column>
+					
+					<apex:column headerValue="" >
+						<apex:pageBlockTable value="{!fd.pd11_List}" var="c" >
+							<apex:facet name="caption" >
+									<b>November Performance</b>
+								</apex:facet>	
+							<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;" />
+							<apex:column headerValue="Premium" style="white-space:nowrap;">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:param value="{!c.premium}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:Param value="{!c.varCash}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};"/>
+							
+						</apex:pageBlockTable>
+					</apex:column>
+					
+					<apex:column headerValue="" >
+						<apex:pageBlockTable value="{!fd.pd12_List}" var="c"  >	
+							<apex:facet name="caption" >
+									<b>December Performance</b>
+								</apex:facet>
+							<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;"/>
+							<apex:column headerValue="Premium" style="white-space:nowrap;" >
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:param value="{!c.premium}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:Param value="{!c.varCash}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};"/>
+							
+						</apex:pageBlockTable>
+					</apex:column>
+					
+					<apex:column headerValue="" >
+						<apex:pageBlockTable value="{!fd.q01_List}" var="c" >	
+							<apex:facet name="caption" >
+									<b>First Quarter Performance</b>
+								</apex:facet>
+							<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;" />
+							<apex:column headerValue="Premium" style="white-space:nowrap;">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:param value="{!c.premium}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:Param value="{!c.varCash}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};"/>
+							
+						</apex:pageBlockTable>
+					</apex:column>
+					
+					<apex:column headerValue="" >
+						<apex:pageBlockTable value="{!fd.q02_List}" var="c" >
+							<apex:facet name="caption" >
+									<b>Second Quarter Performance</b>
+								</apex:facet>	
+							<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;" />
+							<apex:column headerValue="Premium" style="white-space:nowrap;">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:param value="{!c.premium}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:Param value="{!c.varCash}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};"/>
+							
+						</apex:pageBlockTable>
+					</apex:column>
+					
+					<apex:column headerValue="" >
+						<apex:pageBlockTable value="{!fd.q03_List}" var="c" >
+							<apex:facet name="caption" >
+									<b>Third Quarter Performance</b>
+								</apex:facet>	
+							<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;" />
+							<apex:column headerValue="Premium" style="white-space:nowrap;" >
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:param value="{!c.premium}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:Param value="{!c.varCash}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};"/>
+							
+						</apex:pageBlockTable>
+					</apex:column>
+					
+					<apex:column headerValue="" >
+						<apex:pageBlockTable value="{!fd.q04_List}" var="c" >	
+							<apex:facet name="caption" >
+									<b>Fourth Quarter Performance</b>
+								</apex:facet>
+							<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;"/>
+							<apex:column headerValue="Premium" style="white-space:nowrap;">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:param value="{!c.premium}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:Param value="{!c.varCash}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};"/>
+							
+						</apex:pageBlockTable>
+					</apex:column>
+					
+					<apex:column headerValue="" >
+						<apex:pageBlockTable value="{!fd.annual_List}" var="c" >
+							<apex:facet name="caption" >
+									<b>Annual Performance</b>
+								</apex:facet>	
+							<apex:column headerValue="Year" value="{!c.year}" style="white-space:nowrap;font-weight:bold;" />
+							<apex:column headerValue="Premium" style="white-space:nowrap;">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:param value="{!c.premium}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="$ Change" style="white-space:nowrap;color:{!IF(c.varCash<0,'red','black')};">
+								<apex:outputText value="$ {0, number, ###,###}" >
+									<apex:Param value="{!c.varCash}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="% Change" value="{!c.varPerc} %" style="white-space:nowrap;color:{!IF(c.varPerc<0,'red','black')};"/>
+							
+						</apex:pageBlockTable>
+					</apex:column>
+
+					
+				</apex:pageBlockTable>
+			</apex:outputPanel>
+		</apex:pageBlock>
+
+
+
+
+</apex:page>

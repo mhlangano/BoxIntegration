@@ -1,0 +1,4 @@
+<aura:event type="COMPONENT" description="Event to indicate whether fields are populated" >
+    <aura:attribute name="birth_date" type="Date" description="Use to pass date inorder to check whether its blank / not" />
+    <aura:attribute name="trip_cost" type="Double" description="Use to pass cost inorder to check whether its blank / not" />
+</aura:event>

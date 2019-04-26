@@ -1,0 +1,46 @@
+<apex:page standardController="Account"  extensions="TIS_FinChart">
+    
+    
+    <apex:chart height="250" width="750" data="{!ChartData}"> 
+        <apex:legend position="left"/>
+       
+        <apex:axis type="Numeric" 
+            position="left" 
+            fields="data1,data2,data3" 
+            title="Premium Totals" 
+            grid="true"/>
+        
+        <apex:axis type="Category" 
+            position="bottom" 
+            fields="name" 
+            title="Monthly Totals"/>
+        
+        <apex:lineSeries title="{!currentYear} Premiums"
+            axis="left" 
+            fill="true" 
+            xField="name" 
+            yField="data1" 
+            markerType="cross" 
+            markerSize="4" 
+            markerFill="#FF0000"/>
+        
+        <apex:lineSeries title="{!minus1Year} Premiums"
+            axis="left" 
+            fill="true" 
+            xField="name" 
+            yField="data2" 
+            markerType="cross" 
+            markerSize="4" 
+            markerFill="#00FF00"/>
+        
+        <apex:lineSeries title="{!minus2Year} Premiums"
+            axis="left" 
+            fill="true" 
+            xField="name" 
+            yField="data3" 
+            markerType="cross" 
+            markerSize="4" 
+            markerFill="#0000FF"/>                        
+   </apex:chart>    
+
+</apex:page>

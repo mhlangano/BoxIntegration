@@ -1,0 +1,238 @@
+.THIS, .THIS * {
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+}
+ 
+div#boxoverlay.THIS {
+    position: absolute;
+    top: -1rem;
+    left: -2rem;
+    right: -2rem;
+    bottom: -6.5rem;
+    background: rgba(255, 255, 255, 0.75);
+    z-index: 10000;
+    text-align: center;
+}
+.THIS div#errorbox {
+    position: relative;
+    margin: 0 auto;
+    top: 40%;
+    background: white;
+    border-radius: .5rem;
+    z-index: 10001;
+    padding: 2rem 4rem;
+    display: inline-block;
+    box-shadow: 0 0 1.25rem 0.25rem rgba(99, 99, 99, 0.2);
+    border: 2px solid #c1c1c1;
+}
+#appModal.cEnrollmentWizard {
+    padding: 1rem 0;
+    position: relative;
+    top: -10px;
+}
+#appModal.cEnrollmentWizard .slds-show {
+    max-width: 100%;
+    min-height: 55vh !important;
+    max-height: 34em;
+    overflow: auto;
+    padding: 1.5rem;
+    position:relative;
+}
+
+.THIS hr {
+    margin: 0 0 1.5rem;
+}
+.THIS .hideme, .THIS.hideme {
+    display: none !important;
+}
+
+.THIS a[data-toggle='tab']{
+  	pointer-events: none;
+  	cursor: default;
+  	text-decoration: none;
+	background-color: lightgrey;
+}
+
+.THIS a[data-required='false']{
+    display: none !important;
+}
+.THIS .slds-tabs--default__link{
+     padding-top: 4px; 
+     height: 2.8rem;
+}	
+.THIS a[data-visited='true']:after {
+    content: '\2713';
+    display: inline-block;
+    color: green;
+    position: relative;
+    top: -1rem;
+    font-weight: bold;
+    left: -50%;
+    font-style: italic;
+}
+.THIS a[data-visited='false'] {
+    color: red;
+ 
+}
+.THIS a[data-visited='false']:after {
+    content: '\26A0';
+    display: inline-block;
+    color: red;
+    position: relative;
+    top: -1rem;
+    font-weight: bold;
+    left: -50%;
+}
+
+.THIS .percent input[type='number'] + span:after {
+    content: '%';
+    color: #ababab;
+    z-index: 9999 !important;
+    margin-left: 0.5em;
+    position: relative;
+}
+.THIS .currency input[type='number'] + span:before {
+    content: '$';
+    float: left;
+    color: #ababab;
+    z-index: 9999;
+    margin-right: 1rem;
+    position: relative;
+}
+.THIS span.slds-icon_container.slds-icon-utility-success.slds-button__icon svg {
+    width: 1.5em;
+    height: 1.5em;
+    fill: #00ad00;
+}
+.THIS.slds-modal__header {
+    height: 90px;
+    position: fixed;
+    padding: 2rem 0;
+    text-align: left;
+    left: 2rem;
+    background: white !important;
+    right: 2rem;
+    z-index: 999;
+    margin-top: -1rem;
+}
+.THIS.slds-modal__header .slds-media .slds-button__icon {
+    width: auto;
+    height: auto;
+}
+.THIS p.slds-text-body_small.slds-line-height_reset {
+    color: #a5a5a5 !important;
+    font-style: italic;
+    font-size: 0.65rem;
+    line-height: 0.8rem;
+}
+
+.THIS .slds-tabs_default {
+    padding-bottom: 1rem;
+}
+
+.THIS .slds-tabs_default__link, .THIS .slds-tabs_default__link {
+    height: 3rem !important;
+    line-height: 3rem !important;
+}
+.THIS h3 {
+    font-weight: bold;
+}
+.THIS .errorMsg {
+    color: red;
+}
+.THIS .text-center {
+    text-align: center;
+}
+.THIS .text-right {
+    text-align: right;
+}
+.THIS span.slds-icon_container.slds-icon-utility-down.slds-button__icon * {
+    width: 1rem;
+    height: 1rem;
+}
+.THIS .slds-row > div {
+    display: inline-block;
+    vertical-align: top;
+}
+.THIS .slds-row.bottom > div {
+    vertical-align: bottom;
+}
+.THIS .slds-row.middle > div {
+    vertical-align: middle;
+}
+.THIS .slds-size_1-of-3 slds-col--padded .middle {
+    vertical-align: middle;
+} 
+
+
+.THIS input[type='number'] {
+    width: 92%;
+} 
+.THIS input[type='number'] + span {
+    width: 97%;
+}
+.THIS .tourblock input[type='number'] {
+    width: 97%;
+}
+.THIS .currency input[type='number']:focus {
+    padding-left: 2.5em;
+}
+.THIS .slds-row {
+    display: block;
+    margin: 0.25em auto 1em;
+}
+.THIS div[data-type='traveler'],
+.THIS div[data-type='crcdates']{
+    margin-bottom: 1rem;
+    padding-left : 1rem;
+    padding-right : 1rem;
+    padding-top : 1rem;
+    padding-bottom : 1rem;
+    
+    background: #f8f8f8; 
+    border: 5px solid white; 
+}
+
+.THIS .tabZindex {
+    z-index:-1;
+}
+.THIS .tabZindexField1 {
+    background-color: rgb(255, 255, 255);
+    border-color: rgb(194, 57, 52);
+    box-shadow: rgb(194, 57, 52) 0 0 0 1px inset;
+    background-clip: padding-box;
+}
+.THIS .slds-row.middle > div {
+    vertical-align: middle;
+}
+.THIS .slds-tabs_default {
+    padding-bottom: 1rem;
+}
+.THIS .dollar{
+    display:inline-block;
+	position: relative;
+}
+.THIS .changeMe{
+     background-color: red !important; 
+}
+.THIS .dollar input{
+	padding-left:25px;
+}
+.THIS .dollar:before {
+	position: absolute;
+    content:"$";
+    left:10px;
+	top:8.6px; 
+    color:#514f4d;
+}
+.THIS .fullwidth{
+    width:100% !important;
+}
+.THIS #add-traveler-button-container {
+    padding-bottom: 150px;
+}
+.THIS div.flex-center {
+    display: flex; 
+    justify-content: center;
+}

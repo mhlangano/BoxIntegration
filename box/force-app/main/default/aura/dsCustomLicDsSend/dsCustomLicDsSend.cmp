@@ -1,0 +1,14 @@
+<aura:component implements="flexipage:availableForAllPageTypes,force:hasRecordId" controller="DsPackageEnv">
+    <aura:attribute name="accountContacts" type="Contact[]" />
+    <aura:attribute name="simpleRecord" type="Object" />
+    <aura:attribute name="recordError" type="String" />
+    <aura:attribute name="showCustomBtn" type="Boolean" default="false" />
+    <force:recordData aura:id="record" recordId="{!v.recordId}" targetError="{!v.recordError}" fields="Id,Send_DS_Envelope__c,License_Name__c,Email__c,Licensee_DS_Role__c,Contact_Full_Name__c,Contact_Email__c,Contact_DS_Role__c" targetFields="{!v.simpleRecord}"
+        mode="VIEW" recordUpdated="{!c.recordUpdated}" />
+    <lightning:button variant="neutral" label="Send Licensing Envelope with DocuSign" onclick="{!c.handleLicenseeClick }" />
+    <br/><br/>
+    <aura:if isTrue="{!v.showCustomBtn}">
+        <p/>
+        <lightning:button variant="neutral" label="Send Additional Envelope with DocuSign" onclick="{!c.handlePrimaryClick }" />
+    </aura:if>
+</aura:component>

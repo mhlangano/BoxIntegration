@@ -1,0 +1,8 @@
+<apex:page controller="ctrl_AccountOwnerDashboard" >
+<apex:form id="theForm">
+	<apex:pageBlock >
+			<c:FinancialDashboard RID="{!UserID}"/>
+			<apex:commandButton action="{!goToReport}" value="Financial Dashboard Detail Report" id="cb_Accounts" />			
+	</apex:pageBlock>	
+</apex:form>
+</apex:page>

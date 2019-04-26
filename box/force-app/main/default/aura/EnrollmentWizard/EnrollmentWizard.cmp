@@ -1,0 +1,1556 @@
+<aura:component implements="flexipage:availableForAllPageTypes,force:lightningQuickAction,force:hasRecordId,lightning:isUrlAddressable" access="global" controller="EnrollmentWizardController" >
+    <!-- Handlers -->
+    <aura:handler name="init" action="{!c.init}" value="{!this}" />
+
+    <aura:dependency resource="markup://c:EnrollmentProduct" type="COMPONENT" />
+    <aura:dependency resource="markup://c:TravelerComponent" type="COMPONENT" />
+    
+    <!-- Look Up Fields attributes--> 
+    <aura:attribute name="selectedLookUpRecordName" type="sObject" default="{}"/>
+    <aura:attribute name="selectedLookUpRecordDestination" type="sObject" default="{}"/>
+    <aura:attribute name="selectedLookUpRecordAirline" type="sObject" default="{}"/>
+    <aura:attribute name="selectedLookUpRecordCruiseLine" type="sObject" default="{}"/>
+    <aura:attribute name="selectedLookUpRecordTourOperator" type="sObject" default="{}"/>
+    <aura:attribute name="selectedLookUpRecordDepartingAirport" type="sObject" default="{}"/>
+     
+    <!-- Picklist Fields attributes-->
+    <aura:attribute name="statesOptions" type="List" />
+    <aura:attribute name="countriesOptions" type="List" />
+    <aura:attribute name="source" type="List" />
+    <aura:attribute name="policyStatus" type="List" />
+    <aura:attribute name="policy_fulfillment" type="List" />
+    <aura:attribute name="payment_type" type="List" />
+    <aura:attribute name="authorization_status" type="List" />
+    <aura:attribute name="refund_type" type="Object[]" />
+    <aura:attribute name="coverage_type" type="List" /> 
+    <aura:attribute name="refund_to" type="List" />
+    <aura:attribute name="inbound_sales_rep" type="List" />
+    <aura:attribute name="age_category" type="List" />
+    <aura:attribute name="startenrollment" type="String" default="false"/>
+    <aura:attribute name="traveldet" type="String" default="false"/>
+    <aura:attribute name="productsel" type="String" default="false"/>
+    <aura:attribute name="agenttrip" type="String" default="false"/>
+    
+    <!-- Wizard Tabs navigation attributes-->      
+    <aura:attribute name="recordId" type="Id" default=""/>    
+    <aura:attribute name="confirmationNumber" type="String" default="For existing enrollments, grabbed from Page url"/> 
+    <aura:attribute name="userIntent" type="String" default="NewEnrollment" description="Edit Enrollment/ Enroll again. Stores user action, grabbed from page URL"/> 
+    <aura:attribute name="currentTab" type="Integer" default="1"/>
+    <aura:attribute name="tabMin" type="Integer" default="1"/>
+    <aura:attribute name="tabMax" type="Integer" default="9"/>
+    <aura:attribute name="tabList" type="String[]" default="['startenrollment','traveldet','productsel','agenttrip','traveler','policydoc','summary','savequote','payment']"/>
+    <aura:attribute name="tabMap" type="Map" default="{1:'startenrollment',2:'traveldet',3:'productsel',4:'agenttrip',5:'traveler',6:'policydoc',7:'summary',8:'savequote',9:'payment'}"/>
+    <aura:attribute name="tabMapRev" type="Map" default="{'startenrollment':1,'traveldet':2,'productsel':3,'agenttrip':4,'traveler':5,'policydoc':6, 'summary':7,'savequote':8,'payment':9}"/>
+    <aura:attribute name="selTabId" type="String" default="startenrollment" />
+    <aura:attribute name="priorTabId" type="String"/>
+    <aura:attribute name="recordStatus" type="String"/>
+    <aura:attribute name="currentTabId" type="String" default=""/>
+    <aura:handler name="change" value="{!v.selTabId}" action="{!c.trackPriorTab}"/>
+    
+    <!-- Traveler Component -->
+    <aura:handler name="TravelerEvent" event="c:TravelerComponentEvent" action="{!c.processTravelerEvent}"/>
+    <aura:attribute name="TravelersList" type="List" />
+    
+    <!-- Set Value handler + Modal Reply Attributes. -->
+    <aura:handler name="reply" event="c:ModalResponseEvent" action="{!c.handleModalResponseEvent}"/>
+    
+    <aura:handler name="savepolicy" event="c:PolicyNotesModalEvent" action="{!c.postEditSavePolicyHandler}"/>  
+ 
+    <!-- Objects -->
+    <aura:attribute name="enrollment" type="Enrollments__c" default="{'sobjectType': 'Enrollments__c', 'Source_c__c':'Phone', 'Country_of_residency__c':'United States', 'Confirmation_Number__c':null, 'Record_Status__c': 'Quote'}"/>    
+    <aura:attribute name="account" type="Account" default="{'sobjectType': 'Account'}"/>
+	<aura:attribute name="initial_account" type="Account" default="{'sobjectType': 'Account'}"/>      
+    <aura:attribute name="traveler" type="Traveler__c" default="{'sobjectType': 'Traveler__c'}"/>
+    <aura:attribute name="policy_trans" type="Policy_Transaction__c" default="{'sobjectType': 'Policy_Transaction__c'}"/>
+    <aura:attribute name="CRCDatesList" type="List" />
+    <aura:attribute name="CRCCost" type="Double" />
+    <aura:attribute name="EnrollmentNotes" type="String[]" />
+ 
+    <!--Other attributes-->
+    <aura:attribute name="goBackButton" type="Boolean" default="true" />
+    <aura:attribute name="goFowardButton" type="Boolean" default="true" />
+    <aura:attribute name="getQuoteButton" type="Boolean" default="true" />
+    <aura:attribute name="payment_refund" type="String" description="Set Payment/Refund radio button on payment tab"/>
+    <aura:attribute name="disabledState" type="Boolean" default="false" description="Disable State of residency if US/Canada not selected in Travel details tab"/>
+     
+    <!--Declare events handlers-->
+    <aura:handler name="CustomLookupEvent" event="c:CustomLookupEvent" action="{!c.handleCustomLookupEvent}" />
+
+    <!-- Handlers/attributes for watching complex attributes to pull string values for later display -->
+    <aura:handler name="change" value="{!v.selectedLookUpRecordDestination}" action="{!c.setDestinationName}"/>
+    <aura:attribute name="destinationName" type="String" />
+    <aura:handler name="change" value="{!v.selectedLookUpRecordName}" action="{!c.enrollmentInfoTabHandler}" description="If the Source, Company/DBA or Zip Code is modified after Validate is clicked, the user is required to validate again. Handler for when company is changed"/>
+    
+    <!-- Product Selection objects -->
+    <aura:attribute name="ProductFamilyTabs" type="Aura.Component[]"/>
+    <aura:attribute name="PurchasedProduct" type="Object" default="{isRetail: false, isFlight:false, isUseYear: false, isGroupProduct:false, isStudentGroup: false}" />
+    <aura:attribute name="TotalCost" type="Double" default="0.00" />
+    <aura:attribute name="ProductUpgrades" type="Object[]" />
+    <aura:attribute name="ProductCRCDates" type="Object[]"  />
+    <aura:attribute name="ProductDeliveryScript" type="String" />
+    <aura:attribute name="PlanTypeMap" type="Map" default="{0:'Unknown', 1:'Leisure Package Plans', 2:'Corporate Package Plans', 3:'Flight Plans', 4:'Partners Only', 5:'Timeshares', 6:'Custom', 7:'Groups', 8:'Club', 9:'Vacation Ownership', 10:'Resort', 11:'Travel Solve', 12:'Travel Solve Partner'}" />
+    <aura:handler name="ProductEvent" event="c:ProductEvent" action="{!c.handleProductEvent}" includeFacets="true" phase="capture"/>
+
+    <!-- Payment Selection Radio Button (Payment tab)-->
+    <aura:attribute name="payment_options" type="List" default="[{'label': 'Payment', 'value': 'Payment'},{'label': 'Refund', 'value': 'Refund'}]"/>
+    <aura:attribute name="payment_value" type="String" default="Payment"/>
+	<aura:attribute name="require_check_fields" type="Boolean" default="false" description="For making Name on Check and Check Number on Payment tab required if Paymement Type = Check"/>
+    <aura:attribute name="ShowNewEnrollmentButton" type="Boolean" default="false" description="Do we display the new enrollment button?" />
+    
+    <!-- ######################################### -->
+    <!-- #### Travelex API Related Attributes #### -->
+    <!-- ######################################### -->
+    
+    <!-- (( Custom Setting | API Endpoint and Credentials )) -->
+    <aura:attribute name="BaseURL" type="String" />
+    <!-- (( Tab 1 | Start Enrollment )) -->
+    <aura:attribute name="validatePayload" type="Object" description="The data we send to the Validate API endpoint" />
+    <aura:attribute name="validateResponseFlag" type="Boolean" default="false" description="Marked 'true' when Validate API returns a success" />
+    <aura:attribute name="validateAgencyId" type="String" description="AgencyID returned from latest ValidateLocationNumber call" />
+    <aura:attribute name="validateLocationNumber" type="String" description="Location number returned from latest Validate call" />
+    <!-- (( Tab 2 | Travel Details )) -->
+    <aura:attribute name="planSelectionPayload" type="Object" description="The data we send to the GetPlanSelection API endpoint" />
+    <aura:attribute name="planSelectionProducts" type="Object" description="The plans returned from GetPlanSelection API endpoint" />
+    
+    <!-- Incementally shows wizard tabs -->
+    <aura:attribute name="validEnrollment" type="Boolean"  default="true" description="Hide/Show Wizard tabs. Users should not be able to proceed with Enrollment Wizard if Zip code is blank/Validate button is not clicked on Start Enrollement tab"/>
+    <aura:attribute name="startEnrollmentTab" type="Boolean"  default="false" description="Hide/Show Wizard tabs. Users should not be able to proceed with Enrollment Wizard if Zip code is blank/Validate button is not clicked on Start Enrollement tab"/>
+    <aura:attribute name="travelDetailsTab" type="Boolean"  default="false" description="Hide/Show Wizard tabs. Users should not be able to proceed with Enrollment Wizard if Zip code is blank/Validate button is not clicked on Start Enrollement tab"/>
+    <aura:attribute name="productSelectionTab" type="Boolean"  default="false" description="Rest of the tabs, should only be true after Purchase button has been selected"/>
+      
+    <!-- (( Tab 3 | Product Selection )) -->
+    <aura:attribute name="productComponents" type="Object[]" description="List of the Product cards on all tabs"/>  
+    <aura:attribute name="validateTravelerRatesPayload" type="Object" description="The data sent to ValidateTravelerRates endpoint." />
+    <aura:attribute name="policyRateDetail" type="Object" description="Response from ValidateTravelerRates"/>
+    <!-- (( Tab 6 | Policy Document Delivery )) -->
+    <aura:attribute name="validateAndRatePolicyPayload" type="Object" description="The data we send to the ValidateAndRatePolicy API endpoint" />
+    <aura:attribute name="policyDocument" type="Object" description="DOC returned from ValidateAndRatePolicy" />
+    <!-- ((Tab 8 | Save Quote )) -->
+    <aura:attribute name="savePolicyQuotePayload" type="Object" description ="Data sent to the purchase/policy/savepolicyquote endpoint" />
+    <aura:attribute name="SaveQuoteMessage" type="String" description=""/>
+    <!-- ((Tab 9 | Save Policy )) -->
+    <aura:attribute name="savePolicyPayload" type="Object" description="" />
+    <aura:attribute name="PaymentsList" type="List" />
+    <aura:attribute name="LastPaymentDeclined" type="Boolean" default="false" />
+    <aura:attribute name="TotalClientPaid" type="Double" default="0.00" />
+    <aura:attribute name="PaymentModalTitle" type="String"/>
+    <aura:attribute name="PaymentModalMessage" type="String"/>
+    <aura:attribute name="PaymentModalShow" type="Boolean" default="false" />
+    <aura:attribute name="PaymentModalOption" type="String" />
+        
+    <!-- edit enrollment api attributes-->
+    <aura:attribute name="policy" type="Map" description="For storing LoadPostSalePolicyRequest api response"/>         
+    <aura:attribute name="policyTransList" type="List" description="For storing LoadPostSalePolicyRequest, policy.payments api response"/> 
+        
+	<!-- LoadPostSalePolicy API-->
+    <aura:attribute name="loadPostSalePolicyPayload" type="Object" description ="Data sent to policy endpoint" /> 
+    <aura:attribute name="loadPostSalePolicyResponse" type="Object" description ="" />     
+
+    <!-- ValidatePolicyTransfer API--> 	
+    <aura:attribute name="PolicyTransferStatus" type="String" description ="" /> 
+    <aura:attribute name="PolicyTransferMessage" type="String" description ="" /> 
+    <aura:attribute name="PolicyTransferResponse" type="Object" description ="" /> 
+   
+    <aura:attribute name="PolicyNotesModal" type="String" default="slds-hide"/>
+   
+    <aura:attribute name="Notes" type="String[]" description ="Post Edit Save Modal, store Policy Notes comments" /> 
+    <aura:attribute name="backDatedPolicy" type="Boolean" default="false" description =""  /> 
+    <aura:attribute name="policyTypeToSave" type="String" default="" description ="Save Back Dated Policy, Not Back Dated Policy, With No Transfer.. Set this attribute from source"  /> 
+    
+    <aura:attribute name="calculateRate" type="Boolean" default="false" description ="For Calculate Rate button" /> 
+    <aura:attribute name="CalculateRateModalShow" type="Boolean" default="false" description ="" />  
+    
+    <!-- #### END Travelex API Atrributes #### -->
+    
+    <!-- ## API Error Modal ## -->
+    <aura:attribute name="errorModalToggle" type="Boolean" default="false" description="Hide/Show the error message modal for API issues" />
+    <aura:attribute name="errorModalMessage" type="List" default="" />
+    <aura:attribute name="errorModalTitle" type="String" default="" description="Holds latest error title from the APIs" />
+    <aura:if isTrue="{!v.errorModalToggle}">
+        <div class="slds-row" aura:id="errorModalContainer" id="errorModalContainer" style="width: 40%;"> 
+            <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close" onclick="{!c.toggleErrorModal}" alternativeText="close" variant="bare-inverse" class="slds-modal__close"/>
+                        <h2 class="slds-text-heading_medium slds-hyphenate">{!v.errorModalTitle}</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <aura:iteration items="{!v.errorModalMessage}" var="error">
+                            <aura:if isTrue="{! !empty(error.fieldName) }">
+                                <!-- If there is a Field Name, display a header on this list -->
+                                <h3>{!error.fieldName}</h3>
+                            </aura:if>
+                            
+                            <!-- List out any error messages existing -->
+                            <ul class="slds-p-bottom_large slds-list_dotted">
+                                <aura:iteration items="{!error.errorMessages}" var="errmsg">
+                                    <li>{!errmsg}</li>
+                                </aura:iteration> 
+                            </ul>
+                        </aura:iteration>
+                    </div> 
+                    <footer class="slds-modal__footer">
+                        <lightning:button onclick="{!c.toggleErrorModal}" label="Close"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div> 
+        </div>
+    </aura:if>
+    <div class="slds-tabs--default"  style="min-height: 30rem;">
+        <ul class="slds-tabs--default__nav" role="tablist">
+            <!-- #####################################################################################-->
+            <!-- ################################## TAB HEADINGS #####################################-->
+            <!-- #####################################################################################-->            
+            
+            <li  aura:id="startenrollment" class="slds-tabs--default__item slds-active" title="startenrollment" role="presentation" >
+                <a class="slds-tabs--default__link" href="javascript:void(0);" onclick="{!c.startenrollmentTab}" role="tab" tabindex="0" aria-selected="false" aria-controls="tab-default-1" id="startenrollment">Enrollment Info</a>
+            </li>
+            <aura:renderIf isTrue="{!v.startEnrollmentTab}">
+                <li  aura:id="traveldet"  class="slds-tabs--default__item " title="traveldet" role="presentation">
+                    <a class="slds-tabs--default__link" href="javascript:void(0);" onclick="{!c.traveldetTab}" role="tab" tabindex="-1" aria-selected="true" aria-controls="tab-default-2" id="traveldet">Travel Details</a>
+                </li>
+            </aura:renderIf>
+            <aura:renderIf isTrue="{!v.travelDetailsTab}">
+                <li  aura:id="productsel" class="slds-tabs--default__item " title="productsel" role="presentation">
+                    <a class="slds-tabs--default__link" href="javascript:void(0);" onclick="{!c.productselTab}" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-3" id="productsel">Product Selection</a>
+                </li>
+            </aura:renderIf> 
+            <aura:renderIf isTrue="{!v.productSelectionTab}">
+                <li  aura:id="agenttrip" class="slds-tabs--default__item " title="agenttrip" role="presentation">
+                    <a class="slds-tabs--default__link" href="javascript:void(0);" onclick="{!c.agenttripTab}" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-4" id="agenttrip">Agent/Trip Information</a>
+                </li>
+                <li  aura:id="traveler" class="slds-tabs--default__item " title="traveler" role="presentation">
+                    <a class="slds-tabs--default__link" href="javascript:void(0);" onclick="{!c.travelerTab}" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-5" id="traveler">Traveler Information</a>
+                </li>
+                <li  aura:id="policydoc" class="slds-tabs--default__item " title="policydoc" role="presentation">
+                    <a class="slds-tabs--default__link" href="javascript:void(0);" onclick="{!c.policydocTab}" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-6" id="">Policy Document Delivery</a>
+                </li>
+                <li  aura:id="summary" class="slds-tabs--default__item " title="summary" role="presentation">
+                    <a class="slds-tabs--default__link" href="javascript:void(0);" onclick="{!c.summaryTab}" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-7" id="summary">Summary</a>
+                </li>
+                <li  aura:id="savequote" class="slds-tabs--default__item " title="savequote" role="presentation">
+                    <a class="slds-tabs--default__link" href="javascript:void(0);" onclick="{!c.savequoteTab}" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-8" id="savequote">Save Quote</a>
+                </li>
+                <li  aura:id="payment" class="slds-tabs--default__item " title="payment" role="presentation">
+                    <a class="slds-tabs--default__link" href="javascript:void(0);" onclick="{!c.paymentTab}" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-9" id="">Payment</a>
+                </li>
+            </aura:renderIf>
+        </ul>
+        <!-- #####################################################################################-->
+        <!-- ################################## ENROLLMENT INFO TAB #############################-->
+        <!-- #####################################################################################-->
+        
+        <div aura:id="startenrollment_div" id="startenrollment_div" class="slds-tabs--default__content slds-show" role="tabpanel" aria-labelledby="startenrollment_div">
+            <div class="slds-row">
+                <div class="slds-size_1-of-6 slds-col--padded"/>
+                <div class="slds-size_2-of-6 slds-col--padded">
+                    <lightning:select aura:id="source"  label="Source" messageWhenValueMissing="Source is required." value="{!v.enrollment.Source_c__c}" onchange="{!c.enrollmentInfoTabHandler}"> 
+                        <aura:iteration items="{!v.source}" var="item">
+                            <option value="{!item.value}" text="{!item.label}" selected="{!item.selected}" />
+                        </aura:iteration>
+                    </lightning:select>
+                </div> 
+                <div class="slds-size_2-of-6 slds-col--padded">
+                    <c:customLookup aura:id="company_dba" objectAPIName="account" fieldName="name" IconName="standard:account" selectedRecord="{!v.selectedLookUpRecordName}" label="Company/DBA"/>                    
+                </div>
+                <div class="slds-size_1-of-6 slds-col--padded"/></div>
+            <div class="slds-row">
+                <div class="slds-size_1-of-6 slds-col--padded"/>
+                <div class="slds-size_2-of-6 slds-col--padded">
+                    <lightning:input name="location_number" Id="location_number" aura:id="location_number" value="{!v.account.Location_Number__c}" type="text" label="Location Number"  disabled="true"/>
+                </div> 
+                <div class="slds-size_2-of-6 slds-col--padded" aura:id="zip_codeDiv">
+                    <lightning:textarea name="zip_code" Id="zip_code" aura:id="zip_code" type="text" value="{!v.enrollment.Zip_Code__c}" label="Zip Code" required="true" messageWhenValueMissing="Zip Code is required." onkeyup="{!c.enrollmentInfoTabHandler}"/>
+                </div>
+                <div class="slds-size_1-of-6 slds-col--padded"></div>
+            </div>
+            <div aura:id="edit_startEnrollmentTabDiv" class="slds-hide">
+                <div class="slds-row">
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                    <div class="slds-size_2-of-6 slds-col--padded">
+                        <lightning:input name="confirmation_number_enr" Id="confirmation_number_enr" aura:id="confirmation_number_enr" value="{!v.enrollment.Confirmation_Number__c}" type="text" label="Confirmation Number" />                                                          
+                    </div>
+                    <div class="slds-size_2-of-6 slds-col--padded">
+                        <lightning:input name="account_owner" Id="account_owner" aura:id="account_owner" value="{!v.account.Owner.Name}" type="text" label="Account Owner" />                                                                        	   
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                </div>      
+                
+                <div class="slds-row">
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                    <div class="slds-size_2-of-6 slds-col--padded" aura:id="policy_statusDiv">
+                        <lightning:select aura:id="policy_status" label="Policy Status" value="{!v.enrollment.Policy_Status__c}">
+                            <aura:iteration items="{!v.policyStatus}" var="item">
+                                <option value="{!item.value}" text="{!item.label}" selected="{!item.selected}" />
+                            </aura:iteration>
+                        </lightning:select>
+                        <!--<lightning:input name="policy_status_enr" Id="policy_status_enr" aura:id="policy_status_enr" value="{!v.enrollment.Policy_Status__c}" type="text" label="Policy Status" />                                                                        	                 -->
+                    </div>
+                    <div class="slds-size_2-of-6 slds-col--padded">
+                        <lightning:select aura:id="inbound_sales_rep"  label="Inbound Sales Rep" value="{!v.enrollment.Inbound_Sales_Rep__c}">
+                            <aura:iteration items="{!v.inbound_sales_rep}" var="item">
+                                <option value="{!item.value}" text="{!item.label}" selected="{!item.selected}" />
+                            </aura:iteration>
+                        </lightning:select>
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                </div>   
+                
+                <div class="slds-row">
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                    <div class="slds-size_2-of-6 slds-col--padded">
+                    </div>
+                    <div class="slds-size_2-of-6 slds-col--padded">
+                        <div class="slds-form-element slds-p-top_medium" aura:id="doc_link">
+                            <label class="slds-no-flex">DOC Link</label>
+                            <div><a id="document_link" target="_blank" rel="noopener noreferrer" href="{!v.policyDocument.url}">{!v.policyDocument.documentName}</a></div>                           
+                            <aura:iteration items="{!v.policy.documents}" var="val">
+                                <a href="{!val.url}" target="_blank">{!val.documentName}</a><br/>
+                            </aura:iteration>                             
+                            
+                            
+                        </div>                         
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                </div>
+            </div>
+            <br/>
+            <div class="slds-row text-center">
+                <lightning:button variant="brand" label="Validate" onclick="{! c.enrollmentTabValidateButtonHandler }"   aura:id="enrollmentTabValidateBtn"/>
+            </div>
+        </div>
+        <!-- #####################################################################################-->
+        <!-- ################################ TRAVEL DETAILS TAB #################################-->
+        <!-- #####################################################################################-->
+        <aura:renderIf isTrue="{!v.startEnrollmentTab}">
+            <div aura:id="traveldet_div" id="traveldet_div" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="traveldet_div">
+                <div class="slds-row">
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                    <div class="slds-size_2-of-6 slds-col--padded">
+                        <lightning:select  name="Traveler__c" value="{!v.enrollment.Country_of_residency__c}" onchange="{!c.changeStates}"   aura:id="country_of_residency" label="Country of Residency" required="true" messageWhenValueMissing="Country of Residency required">
+                            <aura:iteration items="{!v.countriesOptions}" var="item">
+                                <option value="{!item.value}" text="{!item.label}" selected="{!item.selected}" />
+                            </aura:iteration>
+                        </lightning:select> 
+                    </div>
+                    <div class="slds-size_2-of-6 slds-col--padded">
+                        <lightning:select  name="Traveler__c" value="{!v.enrollment.State_of_Residency__c}" disabled="{!v.disabledState}" onchange="{!c.validateTravelDetailsTab}" aura:id="state_of_residency" label="State of Residency" messageWhenValueMissing="State of Residency required" >
+                            <aura:iteration items="{!v.statesOptions}" var="item">
+                                <option value="{!item.value}" text="{!item.label}" selected="{!item.selected}" />
+                            </aura:iteration>
+                        </lightning:select>
+                        <div aura:id="state_required_label" style="color:#c23934" class="slds-hide">State of Residency required </div>
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded"/></div>
+                <div class="slds-row">
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                    <div class="slds-size_2-of-6 slds-col--padded slds-has-error" aura:id="validate_departure_date_Div"> 
+                        <ui:inputDate aura:id="departure_date_tra" change="{!c.validateTravelDetailsTab}" value="{!v.enrollment.Departure_Date__c}" label="Departure Date" displayDatePicker="true" format="MM/DD/YYYY" required="true" requiredIndicatorClass="slds-required" />
+                        <div aura:id="validate_departure_date" style="color:#c23934" class="slds-hide">Departure Date Cannot Be in the Past</div>
+                    </div>
+                    <div class="slds-size_2-of-6 slds-col--padded">
+                        <ui:inputDate aura:id="return_date_tra" change="{!c.validateTravelDetailsTab}" value="{!v.enrollment.Return_Date__c}"  label="Return Date"  displayDatePicker="true" format="MM/DD/YYYY" required="true" requiredIndicatorClass="slds-required"/>
+                        <div aura:id="validate_return_date" style="color:#c23934" class="slds-hide">Return date has to be at least 1 day after the Departure Date.</div>
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded"/></div>
+                <div class="slds-row">
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                    <div class="slds-size_4-of-6 slds-col--padded">
+                        <c:customLookup aura:id="destination" objectAPIName="Enrollments__c" fieldName="Destination__c" IconName="standard:article" selectedRecord="{!v.selectedLookUpRecordDestination}" label=" Destination"/>
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded"/></div>
+                <div class="slds-row"></div>
+                <br/>
+                <hr/>
+                <div class="slds-row">
+                    <div class="slds-col--padded">
+                        <h3>Add Traveler</h3>
+                    </div>
+                </div>
+                <div id="new_travelers" aura:id="new_travelers" class="slds-col--padded">
+                    <aura:iteration items="{!v.TravelersList}" var="traveler" indexVar="index">
+                        <c:TravelerComponent Traveler="{!traveler}" RowIndex="{!index}" CompactDisplay="true" PurchasedProduct="{!v.PurchasedProduct}" aura:id="traveler_component" /> 
+                    </aura:iteration>
+                </div>
+                <div class="slds-row text-center" id="add-traveler-button-container">
+                    <lightning:button variant="brand" label="Add Traveler" onclick="{!c.addTraveler}"  />
+                </div>
+            </div> 
+        </aura:renderIf>
+        <aura:renderIf isTrue="{!v.travelDetailsTab}">
+            <!-- #####################################################################################-->
+            <!-- ################################## PRODUCT SELECTION TAB ############################-->
+            <!-- #####################################################################################-->
+            <div aura:id="productsel_div" id="productsel_div" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="productsel_div">
+                <div class="slds-row">
+                    <div class="slds-size_1-of-4 slds-col--padded slds-align_absolute-center">
+                        <h3 class="slds-p-around_x-large slds-text-heading_large"><strong>Trip Summary</strong></h3>
+                    </div>
+                    <div class="slds-size_3-of-4 slds-col--padded">
+                        <div class="slds-row slds-p-top_medium slds-text-align_center">
+                            <div class="slds-size_1-of-5 slds-col"><strong>Destination:&nbsp;</strong> {!v.destinationName}</div>
+                            <div class="slds-size_2-of-5 slds-col"><strong>Traveling:&nbsp;</strong> {!v.enrollment.Departure_Date__c} &nbsp;-&nbsp; {!v.enrollment.Return_Date__c}</div>
+                            <div class="slds-size_2-of-5 slds-col"><strong>Agency:&nbsp;</strong> {!v.account.Name}</div>
+                        </div>
+                        <div class="slds-row slds-p-bottom_medium slds-text-align_center">
+                            <div class="slds-size_1-of-5 slds-col"><strong>Traveler Count:&nbsp;</strong> {!v.TravelersList.length}</div>
+                            <div class="slds-size_2-of-5 slds-col"><strong>Total Plan Cost:&nbsp;</strong> ${!v.TotalCost}</div>
+                            <div class="slds-size_2-of-5 slds-col"><strong>Residency:&nbsp;</strong> {!v.enrollment.Country_of_residency__c}, &nbsp;{!v.enrollment.State_of_Residency__c}</div>
+                        </div>
+                    </div>
+                </div>                                
+                <br/>
+				                                                
+                <!-- Inner tabset of vertical tabs, each being a Product "family" -->
+                <!-- <lightning:button onclick="{!c.productSelectionCreateTabs}" label="Populate" /><br/>-->       
+                <lightning:tabset aura:id="product_family_tabset" variant="vertical">
+                    {!v.ProductFamilyTabs}
+                </lightning:tabset>
+            </div> 
+            <!-- #####################################################################################-->
+            <!-- ################################## AGENT/TRIP INFORMATION TAB #######################-->
+            <!-- #####################################################################################-->            
+            <div aura:id="agenttrip_div" id="agenttrip_div" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="agenttrip_div">
+                <div class="slds-row">
+                    <div class="slds-size_1-of-4 slds-col--padded slds-align_absolute-center">
+                        <h3 class="slds-p-around_x-large slds-text-heading_large"><strong>Trip Summary</strong></h3>
+                    </div>
+                    <div class="slds-size_3-of-4 slds-col--padded">
+                        <div class="slds-row slds-p-top_medium slds-text-align_center">
+                            <div class="slds-size_1-of-5 slds-col"><strong>Destination:&nbsp;</strong> {!v.destinationName}</div>
+                            <div class="slds-size_2-of-5 slds-col"><strong>Traveling:&nbsp;</strong> {!v.enrollment.Departure_Date__c} &nbsp;-&nbsp; {!v.enrollment.Return_Date__c}</div>
+                            <div class="slds-size_2-of-5 slds-col"><strong>Agency:&nbsp;</strong> {!v.account.Name}</div>
+                        </div>
+                        <div class="slds-row slds-p-bottom_medium slds-text-align_center">
+                            <div class="slds-size_1-of-5 slds-col"><strong>Traveler Count:&nbsp;</strong> {!v.TravelersList.length}</div>
+                            <div class="slds-size_2-of-5 slds-col"><strong>Total Plan Cost:&nbsp;</strong> ${!v.TotalCost}</div>
+                            <div class="slds-size_2-of-5 slds-col"><strong>Residency:&nbsp;</strong> {!v.enrollment.Country_of_residency__c}, &nbsp;{!v.enrollment.State_of_Residency__c}</div>
+                        </div>
+                    </div>
+                </div>                                
+                 
+                
+                <div class="slds-hide" aura:id="is_groupDiv">
+                    <div class="slds-row">
+                        <div class="slds-size_1-of-4 slds-col--padded">
+                            <lightning:input aura:id="group_name" type="text" value="{!v.enrollment.Group_Name__c}" label="Group Name"/>
+                        </div>
+                        <div class="slds-size_1-of-4 slds-col--padded">
+                            <lightning:input aura:id="group_id" type="text" label="Group ID" value="{!v.enrollment.Group_ID__c}" />
+                        </div>   
+                        <div class="slds-size_1-of-4 slds-col--padded">
+                            <lightning:input aura:id="group_phone" type="tel" value="{!v.enrollment.Group_Phone__c}" label="Group Phone"/>
+                        </div>						
+                        <div class="slds-size_1-of-4 slds-col--padded">
+                            <lightning:input Id="group_email" aura:id="group_email" value="{!v.enrollment.Group_Email__c}" type="email" label="Group Email"/>
+                        </div>
+                    </div>
+                    <br/>
+                    <div class="slds-row">
+                        <div class="slds-size_1-of-4 slds-col--padded">
+                            <ui:inputDate aura:id="group_departure_date" label="Group Departure Date" value="{!v.enrollment.Group_Departure_Date__c}" displayDatePicker="true" format="MM/DD/YYYY"/>
+                        </div>
+                        <div class="slds-size_1-of-4 slds-col--padded">
+                            <ui:inputDate aura:id="group_return_date" label="Group Return Date" value="{!v.enrollment.Group_Return_Date__c}" displayDatePicker="true" format="MM/DD/YYYY"/>
+                        </div>                     
+                    </div>
+                </div>
+                <br/>                 
+                <div class="slds-row"><!-- always visible -->
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <ui:inputDate aura:id="agent_purchase_date" label="Purchase Date"  displayDatePicker="true" format="MM/DD/YYYY" value="{!v.enrollment.Purchase_Date__c}"/>
+                    </div>                    
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <ui:inputDate aura:id="effective_date" label="Effective Date"  displayDatePicker="true" format="MM/DD/YYYY" value="{!v.enrollment.Effective_Date__c}" disabled="true"/>                        						
+                    </div>                    
+
+                    <div class="slds-size_1-of-4 slds-col--padded slds-hide" aura:id="postmarked_dateDiv">
+                        <aura:if  isTrue="{!(v.enrollment.Source_c__c == 'Mail' || v.enrollment.Source_c__c == 'Fax' || v.enrollment.Source_c__c == 'Roster')}">   
+                            <ui:inputDate aura:id="postmarked_date" label="Postmarked Date"  displayDatePicker="true" format="MM/DD/YYYY" value="{!v.enrollment.Postmarked_Date__c}" required="true" updateOn="change" /> 
+                        </aura:if>                        
+                    </div>
+					<div class="slds-size_1-of-4 slds-col--padded">
+						 <ui:inputDate aura:id="payment_due_date" value="{!v.enrollment.Payment_Due_Date__c}" label="Payment Due Date" displayDatePicker="true" format="MM/DD/YYYY"/> 
+					</div>						
+                </div>	                
+                <div class="slds-row">        
+                    <div class="slds-size_1-of-3 slds-col--padded slds-hide" aura:id="departure_dateDiv">
+                        <ui:inputDate aura:id="departure_date_age" label="Departure Date"  displayDatePicker="true" format="MM/DD/YYYY" value="{!v.enrollment.Departure_Date__c}" disabled="true"/>
+                    </div>
+                    <div class="slds-size_1-of-3 slds-col--padded slds-hide" aura:id="return_dateDiv">
+                        <ui:inputDate aura:id="return_date_age" label="Return Date"  displayDatePicker="false" format="MM/DD/YYYY" value="{!v.enrollment.Return_Date__c}" disabled="true"/>
+                    </div> 
+                    <div class="slds-size_1-of-3 slds-col--padded slds-hide"  aura:id="deposit_dateDiv">
+                        <ui:inputDate aura:id="deposit_date" label="Deposit Date"  displayDatePicker="true" format="MM/DD/YYYY" class="{!v.enrollment.Deposit_Date__c}" />
+                    </div>                    
+                </div>                               
+                <br/>
+                <div class="slds-row slds-hide" aura:id="is_use_yearDiv">
+                    <div class="slds-size_1-of-3 slds-col--padded">
+                        <lightning:select label="Use Year" aura:id="use_year" value="{!v.enrollment.Is_Use_Year__c}">
+                            <option value="">Choose one...</option>
+							<aura:iteration items="{!v.PurchasedProduct.useYearList}" var="uyd">
+                                <option value="{!uyd}">{!uyd}</option>
+                            </aura:iteration>
+                        </lightning:select>
+                    </div>
+                    <div class="slds-size_1-of-3 slds-col--padded">
+                        <ui:inputDate aura:id="use_year_start_date" label="Use Year Start Date"  value="{!v.enrollment.Use_Year_Start_Date__c}"  displayDatePicker="true" format="MM/DD/YYYY" />
+                    </div>
+                    <div class="slds-size_1-of-3 slds-col--padded">
+                        <ui:inputDate aura:id="use_year_end_date" label="Use Year End Date"  value="{!v.enrollment.Use_Year_End_Date__c}" displayDatePicker="true" format="MM/DD/YYYY"/>
+                    </div>
+                </div>                                
+                <br/>         
+                <div class="slds-row">
+                    <div class="slds-size_1-of-3 slds-col--padded slds-hide" aura:id="destinationDiv">
+                        <c:customLookup aura:id="destination_age1" objectAPIName="Enrollments__c" fieldName="Destination__c" IconName="standard:article" selectedRecord="{!v.selectedLookUpRecordDestination}" label="Destination"/>
+                    </div>
+                </div>                
+                <div class="slds-row slds-hide" aura:id="travelDiv">
+                    <div class="slds-size_1-of-3 slds-col--padded" >
+                        <c:customLookup aura:id="airline" objectAPIName="Enrollments__c" fieldName="Airline__c" IconName="standard:work_queue" selectedRecord="{!v.selectedLookUpRecordAirline}" label="Airline"/>
+                    </div>
+                    <div class="slds-size_1-of-3 slds-col--padded">
+                        <c:customLookup aura:id="cruise_line" objectAPIName="Enrollments__c" fieldName="Cruise_Line__c" IconName="standard:article" selectedRecord="{!v.selectedLookUpRecordCruiseLine}" label="Cruise Line"/>
+                    </div>                    
+                    <div class="slds-size_1-of-3 slds-col--padded">
+                        <c:customLookup aura:id="tour_operator" objectAPIName="Enrollments__c" fieldName="Tour_Operator__c" IconName="standard:article" selectedRecord="{!v.selectedLookUpRecordTourOperator}" label="Tour Operator"/> 
+                    </div>
+                </div>                                   
+               <div class="slds-hide" aura:id="is_collectionDiv"> 
+                    <div class="slds-row">
+                        <div class="slds-size_1-of-3 slds-col--padded">
+                            <!--<lightning:input aura:id="collection_begin_date" type="text" label="Collection Begin Date" />-->
+                            <ui:inputDate aura:id="collection_begin_date" value="{!v.enrollment.Collection_Begin_Date__c}" label="Collection Begin Date" displayDatePicker="true" format="MM/DD/YYYY" />
+                        </div>
+                        <div class="slds-size_1-of-3 slds-col--padded">
+                            <ui:inputDate aura:id="collection_end_date" value="{!v.enrollment.Collection_End_Date__c}" label="Collection End Date"  displayDatePicker="true" format="MM/DD/YYYY"/>
+                        </div>
+                    </div>                
+                </div>
+                <br/>                         
+                <div class="slds-row slds-hide" aura:id="is_flightDiv">
+                    <div class="slds-size_1-of-3 slds-col--padded">
+                        <lightning:input aura:id="flight_number" type="text" label="Flight Number" value="{!v.enrollment.Flight_Number__c}"/>
+                    </div>
+                    <div class="slds-size_1-of-3 slds-col--padded" >
+                        <c:customLookup aura:id="departing_airport" objectAPIName="Enrollments__c" fieldName="Departing_Airport__c" IconName="standard:scan_card" selectedRecord="{!v.selectedLookUpRecordDepartingAirport}" label="Departing Airport"/>
+                    </div>
+                </div>       
+                <div class="slds-row" >	
+                    <div class="slds-size_1-of-3 slds-col--padded slds-hide" aura:id="agent_codeDiv">
+                        <lightning:textarea aura:id="agent_code" type="text" label="Agent Code" value="{!v.enrollment.Agent_Code__c}"/>
+                    </div>                     
+                    <div class="slds-size_1-of-3 slds-col--padded slds-hide" aura:id="invoice_numberDiv">
+                        <lightning:textarea  aura:id="invoice_number" type="text" label="Invoice Number" value="{!v.enrollment.Invoice_Number__c}"/>
+                    </div>                       
+                </div>                 
+            </div> 
+            <!-- #####################################################################################-->
+            <!-- ############################## TRAVELER INFORMATION TAB #############################-->
+            <!-- #####################################################################################-->    
+            <div aura:id="traveler_div" id="traveler_div" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="traveler_div">
+                <div class="slds-row">
+                    <div class="slds-size_1-of-4 slds-col--padded slds-align_absolute-center">
+                        <h3 class="slds-p-around_x-large slds-text-heading_large"><strong>Trip Summary</strong></h3>
+                    </div>
+                    <div class="slds-size_3-of-4 slds-col--padded">
+                        <div class="slds-row slds-p-top_medium slds-text-align_center">
+                            <div class="slds-size_1-of-5 slds-col"><strong>Destination:&nbsp;</strong> {!v.destinationName}</div>
+                            <div class="slds-size_2-of-5 slds-col"><strong>Traveling:&nbsp;</strong> {!v.enrollment.Departure_Date__c} &nbsp;-&nbsp; {!v.enrollment.Return_Date__c}</div>
+                            <div class="slds-size_2-of-5 slds-col"><strong>Agency:&nbsp;</strong> {!v.account.Name}</div>
+                        </div>
+                        <div class="slds-row slds-p-bottom_medium slds-text-align_center">
+                            <div class="slds-size_1-of-5 slds-col"><strong>Traveler Count:&nbsp;</strong> {!v.TravelersList.length}</div>
+                            <div class="slds-size_2-of-5 slds-col"><strong>Total Plan Cost:&nbsp;</strong> ${!v.TotalCost}</div>
+                            <div class="slds-size_2-of-5 slds-col"><strong>Residency:&nbsp;</strong> {!v.enrollment.Country_of_residency__c}, &nbsp;{!v.enrollment.State_of_Residency__c}</div>
+                        </div>
+                    </div>
+                </div>                                
+    
+                <div class="slds-row">
+                    <div class="slds-size_1-of-3 slds-col--padded slds-hide" aura:id="ageDiv">
+                        <lightning:input aura:id="age" type="number" label="Age" min="1" step="any" />
+                    </div>
+                    <div class="slds-size_1-of-3 slds-col--padded slds-hide" aura:id="age_categoryDiv">
+                        <lightning:select aura:id="age_category" label="Age Category">   
+                            <option value="">Choose one...</option>
+                            <option value="S">S</option>
+                            <option value="A">A</option>
+                        </lightning:select>
+                    </div>
+
+                </div>
+                <div class="slds-row slds-hide"  aura:id="isGroupDatesDiv">
+                    <div class="slds-size_1-of-3 slds-col--padded" aura:id="departure_date_priDiv">
+                        <ui:inputDate aura:id="departure_date_pri" label="Departure Date" value="{!v.enrollment.Departure_Date__c}"  displayDatePicker="true" format="MM/DD/YYYY"/>
+                    </div>                    
+                    <div class="slds-size_1-of-3 slds-col--padded" aura:id="return_date_priDiv">
+                        <ui:inputDate aura:id="return_date_pri" label="Return Date" value="{!v.enrollment.Return_Date__c}"  displayDatePicker="true" format="MM/DD/YYYY"/>
+                    </div>
+                    <div class="slds-size_1-of-3 slds-col--padded" aura:id="deposit_date_priDiv">
+                        <ui:inputDate aura:id="deposit_date_pri" label="Deposit Date"  displayDatePicker="true" format="MM/DD/YYYY"/>
+                    </div>
+                    <div class="slds-size_1-of-3 slds-col--padded" aura:id="premium_paid_dateDiv">
+                        <ui:inputDate aura:id="premium_paid_date" label="Premium Paid Date"  displayDatePicker="true" format="MM/DD/YYYY"/>
+                    </div>
+                </div>
+                <div class="slds-row">
+                    <div class="slds-size_1-of-3 slds-col--padded slds-hide" aura:id="cfarDiv">
+                        <ui:inputDate aura:id="cfar" label="CFAR"  displayDatePicker="true" format="MM/DD/YYYY"/>
+                    </div>
+                </div>
+                                 
+                <div class="slds-row">
+
+                    <div class="slds-size_1-of-3 slds-col--padded slds-hide"  aura:id="beneficiary_detailsDiv">
+                        <lightning:input aura:id="beneficiary_details" type="text" label="Beneficiary Details" value="{!v.enrollment.Beneficiary_Details__c}" /> 
+                    </div>
+                </div>
+                <br/>
+                <div id="primary_travelers" aura:id="primary_travelers">
+                    <aura:iteration items="{!v.TravelersList}" var="traveler" indexVar="index">
+                        <c:TravelerComponent Traveler="{!traveler}" RowIndex="{!index}" CompactDisplay="false" CountryOptions="{!v.countriesOptions}" StateOptions="{!v.statesOptions}"  PurchasedProduct="{!v.PurchasedProduct}" AgeCategory="{!v.age_category}"/>  
+                    </aura:iteration>
+                </div>
+                <div class="slds-row text-center slds-hide" id="add-primary-traveler-button-container" aura:id="add_traveler_btn">
+                    <lightning:button variant="brand" label="Add Traveler" onclick="{!c.addTraveler}"/> 
+                </div>
+            </div>
+            <!-- #####################################################################################-->
+            <!-- ################################## POLICY DOCUMENT DELIVERY TAB #####################-->
+            <!-- #####################################################################################-->                
+            <div aura:id="policydoc_div" id="policydoc_div" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="policydoc_div">
+                <div class="slds-row">
+                    <div class="slds-size_1-of-4 slds-col--padded slds-align_absolute-center">
+                        <h3 class="slds-p-around_x-large slds-text-heading_large"><strong>Trip Summary</strong></h3>
+                    </div>
+                    <div class="slds-size_3-of-4 slds-col--padded">
+                        <div class="slds-row slds-p-top_medium slds-text-align_center">
+                            <div class="slds-size_1-of-5 slds-col"><strong>Destination:&nbsp;</strong> {!v.destinationName}</div>
+                            <div class="slds-size_2-of-5 slds-col"><strong>Traveling:&nbsp;</strong> {!v.enrollment.Departure_Date__c} &nbsp;-&nbsp; {!v.enrollment.Return_Date__c}</div>
+                            <div class="slds-size_2-of-5 slds-col"><strong>Agency:&nbsp;</strong> {!v.account.Name}</div>
+                        </div>
+                        <div class="slds-row slds-p-bottom_medium slds-text-align_center">
+                            <div class="slds-size_1-of-5 slds-col"><strong>Traveler Count:&nbsp;</strong> {!v.TravelersList.length}</div>
+                            <div class="slds-size_2-of-5 slds-col"><strong>Total Plan Cost:&nbsp;</strong> ${!v.TotalCost}</div>
+                            <div class="slds-size_2-of-5 slds-col"><strong>Residency:&nbsp;</strong> {!v.enrollment.Country_of_residency__c}, &nbsp;{!v.enrollment.State_of_Residency__c}</div>
+                        </div>
+                    </div>
+                </div>                                
+                     
+                
+                <div class="slds-row">
+                    <div class="slds-size_1-of-3 slds-col--padded">
+                        <lightning:select aura:id="policy_fulfillment"  label="Policy Fulfillment" value="{!v.enrollment.Policy_Fulfillment__c}"> 
+                            <aura:iteration items="{!v.policy_fulfillment}" var="item">
+                                <option value="{!item.value}" text="{!item.label}" selected="{!item.selected}" />
+                            </aura:iteration>
+                        </lightning:select>
+                    </div>
+                    <div class="slds-size_2-of-3 slds-col--padded slds-p-left_large">
+                        <lightning:card title="Product Delivery Script" iconName="custom:custom26" class="slds-card_boundary slds-p-around_medium slds-m-around_large">
+                            <div class="uiOutputRichText slds-p-left_xx-large" linkify="true" >
+                                <aura:unescapedHtml value="{!v.ProductDeliveryScript}"/> 
+                            </div>
+                        </lightning:card>
+                    </div>
+                </div>
+                
+                <div class="slds-row " aura:id="emailsDiv">
+                    <div class="slds-size_1-of-3 slds-col--padded slds-hide" aura:id="email1Div">
+                        <lightning:input aura:id="email1" type="email" label="Email 1" value="{!v.enrollment.Email1__c}"/>
+                    </div>
+                    <div class="slds-size_1-of-3 slds-col--padded slds-hide" aura:id="email2Div">
+                        <lightning:input aura:id="email2" type="email" label="Email 2" value="{!v.enrollment.Email2__c}" /> 
+                    </div>
+                    <div class="slds-size_1-of-3 slds-col--padded slds-hide" aura:id="agent_emailDiv">
+                        <lightning:input aura:id="agent_email" type="email" label="Agent Email" value="{!v.enrollment.Agent_Email__c}" />
+                    </div> 
+                </div>
+                
+                <div class="slds-row slds-hide">
+                    <div class="slds-col--padded">
+                        <ul>
+                            <aura:iteration aura:id="document_display" items="" var="document">
+                                <li><a href="{!document.url}">{!document.documentName}</a></li>
+                            </aura:iteration>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!-- #####################################################################################-->
+            <!-- ################################## SUMMARY TAB ######################################-->
+            <!-- #####################################################################################-->              
+            <div aura:id="summary_div" id="summary_div" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="summary_div"> 
+                <div class="slds-row">
+                    <div class="flex-center slds-col--padded">
+                        <lightning:button aura:id="swagentBtn" onclick="{!c.summaryCommentButtonHandler}" label="S/WAGENT"/>
+                        <lightning:button aura:id="swapxBtn" onclick="{!c.summaryCommentButtonHandler}" label="S/WPAX"/>
+                        <lightning:button aura:id="prewaiveBtn" onclick="{!c.summaryCommentButtonHandler}" label="PREWAIVE"/>
+                        <lightning:button aura:id="findefBtn" onclick="{!c.summaryCommentButtonHandler}" label="FINDEF"/>
+                        <lightning:button aura:id="upgradedecBtn" onclick="{!c.summaryCommentButtonHandler}" label="UPGRADDEC"/>
+                        <lightning:button aura:id="visaBtn" onclick="{!c.summaryCommentButtonHandler}" label="VISA"/>
+                    </div>
+                </div>
+                <div class="slds-row">
+                    <div class="flex-center slds-col--padded">
+                        <lightning:button aura:id="cfbrBtn" onclick="{!c.summaryCommentButtonHandler}" label="CFBR"/>
+                        <lightning:button aura:id="effdtBtn" onclick="{!c.summaryCommentButtonHandler}" label="EFFDT"/>
+                        <lightning:button aura:id="upgrdaccBtn" onclick="{!c.summaryCommentButtonHandler}" label="UPGRDACC"/>
+                        <lightning:button aura:id="kipBtn" onclick="{!c.summaryCommentButtonHandler}" label="KIP"/>
+                        <lightning:button aura:id="docsBtn" onclick="{!c.summaryCommentButtonHandler}" label="DOCS"/>
+                        <lightning:button aura:id="cfarBtn" onclick="{!c.summaryCommentButtonHandler}" label="CFAR"/>
+                        <lightning:button aura:id="cubaBtn" onclick="{!c.summaryCommentButtonHandler}" label="CUBA"/>
+                    </div>
+                </div>   
+                <div class="slds-row">
+                    <div class="flex-center slds-col--padded" aura:id="comments_sumDiv">
+                        <lightning:textarea type="text" aura:id="comments_sum" label="Comments" value="{!v.enrollment.Comments__c}" style="width: 50%;" />
+                    </div>
+                </div>
+                <div class="{!v.PurchasedProduct.enableSavedQuotes == true ? 'slds-row' : 'slds-hide'}" aura:id="savedQuoteDiv">
+                    <div class="slds-size_1-of-3"></div>
+                    <div class="slds-size_1-of-6 slds-col--padded">
+                        <lightning:input type="text" aura:id="saveQuoteEmail" label="Email" />
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded" style="padding-top: 23px;">
+                        <button aura:id="getSummarySaveAsQuoteButton" class="slds-button slds-button_neutral" onclick="{!c.saveQuoteButtonHandler}" >Save as Quote</button>
+                    </div>
+                </div>
+                <div class="slds-row">
+                    <div class="slds-size_1-of-3 slds-col--padded" aura:id="policy_document_sumDiv">
+                        <!-- <lightning:input type="text" aura:id="policy_document_sum1" label="DOC Link" value="{!v.enrollment.Policy_Document__c}"/> -->
+                        <div class="slds-form-element slds-p-top_medium" >
+                            <label class="slds-no-flex">DOC Link</label>
+                            <div><a id="document_link" target="_blank" rel="noopener noreferrer" href="{!v.policyDocument.url}">{!v.policyDocument.documentName}</a></div>   
+                        </div>
+                    </div>
+                    <div class="slds-size_1-of-3 slds-col--padded" aura:id="companydba_sumDiv">
+                        <lightning:input type="text" aura:id="companydba_sum" label="Company/DBA" value="{!v.account.Name}" disabled="true" />
+                    </div>
+                    <div class="slds-size_1-of-3 slds-col--padded" aura:id="location_number_sumDiv">
+                        <lightning:input type="text" aura:id="location_number_sum" label="Location Number" disabled="true" value="{!v.account.Location_Number__c}" />
+                    </div>
+                </div>
+                <br/>
+                <hr/>
+                <div class="slds-row">
+                    <h3>Trip Information </h3>
+                </div>
+                <div class="slds-row slds-hide" aura:id="trip_datesDiv">
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input type="text" aura:id="departure_date_sum" label="Departure Date" disabled="true" value="{!v.enrollment.Departure_Date__c}"/>
+                    </div>
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input type="text" aura:id="return_date_sum" label="Return Date" disabled="true" value="{!v.enrollment.Return_Date__c}"/>
+                    </div>
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input  type="text" aura:id="trip_length_sum" label="Trip Length" disabled="true"/>
+                    </div>                    
+                </div>
+            
+                <div class="slds-row slds-hide" aura:id="useYearDatesDiv">
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input  type="text" aura:id="use_year_sum" label="Use Year " disabled="true" value="{!v.enrollment.Is_Use_Year__c}"/>
+                    </div>                        
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input  label="Use Year Start Date" aura:id="use_year_start_date_sum" format="MM/DD/YYYY" disabled="true" value="{!v.enrollment.Use_Year_Start_Date__c}"/>
+                    </div>
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input label="Use Year End Date" aura:id="use_year_end_date_sum" format="MM/DD/YYYY" disabled="true" value="{!v.enrollment.Use_Year_End_Date__c}"/>
+                    </div>                            
+                </div>     
+                <div class="slds-row">
+                    <div class="slds-size_1-of-4 slds-col--padded slds-hide" aura:id="destination_sumDiv">
+                        <lightning:input  type="text" aura:id="destination_sum" label="Destination" disabled="true" value="{!v.selectedLookUpRecordDestination.name}"/>
+                    </div>                       
+                </div>
+                <div class="slds-row slds-hide" aura:id="transOpDiv">
+                    <div class="slds-size_1-of-4 slds-col--padded"  >
+                        <lightning:input  type="text" label="Airline" disabled="true" value="{!v.selectedLookUpRecordAirline.name}"/>
+                    </div>                    
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input type="text" label="Cruise Line" disabled="true" value="{!v.selectedLookUpRecordCruiseLine.name}"/>
+                    </div>     
+                    <div class="slds-size_1-of-4 slds-col--padded ">
+                        <lightning:input type="text" label="Tour Operator" disabled="true" value="{!v.selectedLookUpRecordTourOperator.name}"/>
+                    </div>                    
+                </div>                   
+                
+                <div class="slds-row">                 
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input label="Effective Date" aura:id="effective_date_sum" format="MM/DD/YYYY" disabled="true" value="{!v.enrollment.Effective_Date__c}"/>
+                    </div>
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input label="Purchase Date" format="MM/DD/YYYY" disabled="true" value="{!v.enrollment.Purchase_Date__c}"/>
+                    </div>                    
+                </div>  
+                                
+                <br/>
+                <hr/> 
+                <div class="slds-row">
+                    <h3>Primary Traveler Information</h3>
+                </div>  
+                <div class="slds-row">
+                    <div class="slds-size_1-of-3 slds-col--padded" >
+                        <lightning:input type="text" label="First Name" disabled="true" value="{!v.traveler.First_Name__c}"/>
+                    </div>
+                    <div class="slds-size_1-of-3 slds-col--padded" >
+                        <lightning:input type="text" label="Last Name" disabled="true" value="{!v.traveler.Last_Name__c}"/>
+                    </div>    
+                    <div class="slds-size_1-of-3 slds-col--padded slds-hide" aura:id="dateOfBirthDiv" >
+                        <ui:inputDate label="Date of Birth"  disabled="true" value="{!v.traveler.Date_of_Birth__c}" format="MM/DD/YYYY"/>
+                    </div>                    
+                </div>
+                <div class="slds-row">
+                    <div class="slds-size_1-of-3 slds-col--padded slds-hide" aura:id="calculated_ageDiv">
+   				       <lightning:input aura:id="calculated_age" type="text" disabled="true" label="Calculated Age" value="{!v.traveler.Calculated_Age__c}"/>                                
+                    </div>                      
+                    <div class="slds-size_1-of-3 slds-col--padded slds-hide"  aura:id="tripCostsumDiv" > 
+                        <lightning:input type="text" label="Trip Cost" disabled="true" value="{!v.Trip_Cost__c}" />
+                    </div>   
+                    <div class="slds-size_1-of-3 slds-col--padded">
+                        <lightning:input type="text" label="Base Plan Cost" disabled="true" value="{!v.PurchasedProduct.baseRate}"/>
+                    </div>                       
+                </div>
+                <br/>
+                <div class="slds-row slds-hide"  aura:id="addressDiv"> 
+                    <div class="slds-size_1-of-6 slds-col--padded">
+                        <lightning:input type="text" label="Address 1" disabled="true" value="{!v.traveler.Address_1__c}"/>
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded">
+                        <lightning:input type="text" label="Address 2" disabled="true" value="{!v.traveler.Address_2__c}"/>
+                    </div>                    
+                    <div class="slds-size_1-of-6 slds-col--padded">
+                        <lightning:input  type="text" label="City" disabled="true" value="{!v.traveler.City__c}"/>
+                    </div>
+                    <div class="slds-size_1-of-6  slds-col--padded">
+                        <lightning:input  type="text" label="State" disabled="true" value="{!v.traveler.State__c}"/>
+                    </div>                    
+                    <div class="slds-size_1-of-6 slds-col--padded">
+                        <lightning:input type="text" label="Zip Code" disabled="true" value="{!v.traveler.Zip_Code__c}"/>
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded">
+                        <lightning:input type="text" label="Country" disabled="true" value="{!v.traveler.Country__c}"/>
+                    </div> 
+                </div>
+                <br/>
+                <div class="slds-row">
+                    <div class="slds-size_1-of-4 slds-col--padded slds-hide" aura:id="phonesumDiv">
+                        <lightning:input type="tel" label="Phone" disabled="true" value="{!v.traveler.Phone__c}"/>
+                    </div>
+                    <div class="slds-size_1-of-4 slds-col--padded slds-hide"  aura:id="emailsumDiv">
+                        <lightning:input type="text" aura:id="traveler_email_sum" label="Email" disabled="true" value="{!v.traveler.Traveler_Email__c}"/>
+                    </div>
+                </div>
+                <br/>
+                <hr/>                
+                <div class="slds-row">
+                    <h3>Additional Traveler Information</h3>
+                </div>
+                <div id="primary_travelers_sum" aura:id="primary_travelers_sum">
+                    <!-- this is where travelers rows will pop up -->
+                    <aura:iteration items="{!v.TravelersList}" var="traveler" indexVar="index">
+                        <c:TravelerComponent Traveler="{!traveler}" RowIndex="{!index}" CompactDisplay="false" CountryOptions="{!v.countriesOptions}" StateOptions="{!v.statesOptions}" PurchasedProduct="{!v.PurchasedProduct}"  Disabled="true"/>
+                    </aura:iteration>
+                </div>    
+              
+                
+                <div class="slds-row">
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input  type="number" label="Traveler Count" value="{!v.TravelersList.length}" disabled="true" />
+                    </div>
+                </div>
+                
+                <br/>                
+                <div class="slds-row">
+                    <h3>Selected Plan</h3>
+                </div>
+                <div class="slds-row">
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input type="text" label="Product Name" disabled="true" value="{!v.PurchasedProduct.productName}" /> 
+                    </div>
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input type="text" label="Plan Number" disabled="true" value="{!v.PurchasedProduct.formNumber}"/>
+                    </div>
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input type="text" label="Coverage Type" disabled="true" value="{!v.PurchasedProduct.selectedCoverage.description}"/>
+                    </div>
+                    <div class="slds-size_1-of-4 slds-col--padded"> 
+                        <lightning:input type="type" label="Flight Accident Coverage" disabled="true" value="{!v.PurchasedProduct.selectedFlightAccidentCoverage.description}"/> 
+                    </div>                    
+                </div> 
+                <br/>
+                <hr/>
+                <div aura:id="summary_upgrades_container" class="{!v.ProductUpgrades.length > 0 ? 'slds-show' : 'slds-hide'}">
+                    <div class="slds-row">
+                        <h3>Upgrades</h3>
+                    </div>
+                    <div class="slds-row">
+                        <div class="slds-col--padded slds-size_1-of-1">
+                            <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                                <thead>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Cost</th>
+                                </thead>
+                                <tbody>
+                                    <aura:iteration items="{!v.ProductUpgrades}" var="u">
+                                        <tr>
+                                            <td>{!u.shortDescription}</td>
+                                            <td>{!u.upgradeType}</td>
+                                            <td>
+                                                <aura:if isTrue="{!u.upgradeID == 13}">
+                                                    ${!v.CRCCost}
+                                                    <aura:set attribute="else">
+                                                        ${!u.rate}
+                                                    </aura:set>
+                                                </aura:if>
+                                            </td>
+                                        </tr>
+                                    </aura:iteration>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <br/>
+                    <hr/>
+                </div> <!-- end upgrade container -->
+
+                <div class="slds-row">
+                    <h3>Policy Document Delivery</h3>
+                </div>
+                <div class="slds-row">
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input type="text" label="Policy Fulfillment" disabled="true" />
+                    </div>
+
+                </div>
+                <br/>
+				<div class="slds-row slds-hide" aura:id="recipients_sumDiv">
+                    <h3>Recipient(s)</h3><br/>
+                    <div class="slds-size_1-of-1 slds-col--padded"  >
+                        <aura:if isTrue="{!not(empty(v.enrollment.Email1__c))}">
+                			<ui:outputText value="{!v.enrollment.Email1__c}"/>;
+                        </aura:if>
+                       <aura:if isTrue="{!not(empty(v.enrollment.Email2__c))}">        
+                            <ui:outputText value="{!v.enrollment.Email2__c}"/>;
+                        </aura:if>
+                        <aura:if isTrue="{!not(empty(v.enrollment.Agent_Email__c))}">
+                			<ui:outputText value="{!v.enrollment.Agent_Email__c}"/>
+                        </aura:if>                        
+                    </div>                    
+                </div>
+                <br/>                          
+                <div class="slds-row">
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input class="currency" type="number" min="0" step="1" label="Total Base Plan Cost" disabled="true"/>
+                    </div>
+                </div>			
+                <br/>
+                
+                <div class="slds-row">
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input class="currency" type="number" min="0" step="1" label="Total Upgrade Cost" disabled="true" default="2000" />
+                    </div>
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input class="currency" type="number" min="0" step="1" label="Total Plan Cost" disabled="true" default="2000" />
+                    </div>
+                </div>
+                <div class="slds-row">
+                    <h3>Policy Confirmation</h3>
+                </div>
+                <div class="slds-row">
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input class="currency" type="text" aura:id="confirmation_number_sum" label="Confirmation Number" disabled="true"/>
+                    </div>
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input class="currency" type="url" aura:id="policy_document_sum2" label="DOC Link" disabled="true" />
+                    </div>
+                </div>
+            </div>
+            <!-- #####################################################################################-->
+            <!-- ################################## SAVE QUOTE TAB ###################################-->
+            <!-- #####################################################################################-->              
+            <div aura:id="savequote_div" id="savequote_div" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="savequote_div">
+                <div class="slds-row slds-hide" aura:id="saveQuoteDiv" >
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <!--<lightning:input type="email" aura:id="saveQuoteEmail" label="Email" />-->
+                    </div>
+                    <div class="slds-size_1-of-4 slds-col--padded">
+                        <lightning:input type="text" label="Quote Number" value="{!v.enrollment.Quote_Number__c}" disabled="true"/> <!-- changed from v.enrollment.quoteNumber__c -->
+                    </div>
+                </div>
+                <div aura:id="saveqt_msg" class="slds-row slds-p-around_xx-large slds-text-align_center">
+                    {!v.SaveQuoteMessage}
+                </div>
+                <br/><br/>
+                <aura:if isTrue="{!v.SaveQuoteMessage.length}">
+                    <div class="slds-row slds-p-around__x-large slds-text-align_center">
+                    	<lightning:button variant="brand" label="Save Record" onclick="{!c.saveQuoteRecordHandler}" />
+                    </div>
+                </aura:if>
+            </div>
+            <!-- #####################################################################################-->
+            <!-- ################################## PAYMENT TAB ######################################-->
+            <!-- #####################################################################################-->            
+            <div aura:id="payment_div" id="payment_div" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="payment_div">
+                <div class="slds-row">
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                    <div class="slds-size_2-of-6 slds-col--padded">
+                        <label class="slds-form-element__label">Total Plan Cost</label>        
+                        <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left slds-size_full">
+                            <div class="slds-icon slds-input__icon slds-input__icon_left slds-icon-text-default">$</div>
+                            <input type="number" aura:id="total_plan_cost" id="total_plan_cost" name="total_plan_cost" value="{!v.TotalCost}" class="slds-input fullwidth" disabled="true" />
+                        </div>  
+                    </div>                                        
+                    <div class="slds-size_2-of-6 slds-col--padded">
+                        <lightning:select aura:id="authorization_status"  label="Authorization Status" onchange="{!c.renderPaymentFields}" value="{!v.policy_trans.Authorization_Status__c}"> 
+                            <aura:iteration items="{!v.authorization_status}" var="item">
+                                <option value="{!item.value}" text="{!item.label}" selected="{!item.selected}" />
+                            </aura:iteration>
+                        </lightning:select>
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                </div>
+                <div class="slds-row">
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                    <div class="slds-size_2-of-6 slds-col--padded">                           
+                        <label class="slds-form-element__label">Amount Outstanding</label>        
+                        <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left slds-size_full">
+                            <div class="slds-icon slds-input__icon slds-input__icon_left slds-icon-text-default">$</div>
+                            <input type="number" aura:id="amount_outstanding" id="amount_outstanding" name="amount_outstanding" value="{!v.enrollment.Amount_Outstanding__c}" class="slds-input fullwidth" disabled="true" />
+                        </div>                         
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                </div>
+            	<div aura:id="show_group_plans" class="slds-hide">
+                    <div class="slds-row">
+                        <div class="slds-size_1-of-6 slds-col--padded"/>
+                        <div class="slds-size_2-of-6 slds-col--padded">
+                            <label class="slds-form-element__label">Total Due on Client</label>        
+                            <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left slds-size_full">
+                                <div class="slds-icon slds-input__icon slds-input__icon_left slds-icon-text-default">$</div>
+                                <input type="number" aura:id="total_due_on_client" id="total_due_on_client" name="total_due_on_client" value="{!v.policy_trans.Total_Due_on_Client__c}" class="slds-input fullwidth" disabled="true" />
+                            </div>  
+                        </div>
+                        <div class="slds-size_2-of-6 slds-col--padded">
+                            <label class="slds-form-element__label">Total Due</label>        
+                            <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left slds-size_full">
+                                <div class="slds-icon slds-input__icon slds-input__icon_left slds-icon-text-default">$</div>
+                                <input type="number" aura:id="total_due" id="total_due" name="total_due" value="{!v.policy_trans.Total_Due__c}" class="slds-input fullwidth" disabled="true" />
+                            </div>  
+                        </div>
+                        <div class="slds-size_1-of-6 slds-col--padded"/>
+                    </div>                     
+                    <div class="slds-row">
+                        <div class="slds-size_1-of-6 slds-col--padded"/>
+                        <div class="slds-size_2-of-6 slds-col--padded">
+                            <label class="slds-form-element__label">Total Client Paid</label>        
+                            <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left slds-size_full">
+                                <div class="slds-icon slds-input__icon slds-input__icon_left slds-icon-text-default">$</div>
+                                <input type="number" aura:id="total_client_paid" id="total_client_paid" name="total_client_paid" value="{!v.policy_trans.Total_Client_Paid__c}" class="slds-input fullwidth" disabled="true" />
+                            </div>  
+                        </div>
+                        <div class="slds-size_2-of-6 slds-col--padded">
+                            <label class="slds-form-element__label">Total Paid</label>        
+                            <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left slds-size_full">
+                                <div class="slds-icon slds-input__icon slds-input__icon_left slds-icon-text-default">$</div>
+                                <input type="number" aura:id="total_paid" id="total_paid" name="total_paid" value="{!v.policy_trans.Total_Paid__c}" class="slds-input fullwidth" disabled="true" />
+                            </div>  
+                        </div>
+                        <div class="slds-size_1-of-6 slds-col--padded"/>
+                    </div>                          
+                    <div class="slds-row">
+                        <div class="slds-size_1-of-6 slds-col--padded"/>
+                        <div class="slds-size_2-of-6 slds-col--padded">
+                            <label class="slds-form-element__label">Client Outstanding Amount</label>        
+                            <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left slds-size_full">
+                                <div class="slds-icon slds-input__icon slds-input__icon_left slds-icon-text-default">$</div>
+                                <input type="number" aura:id="client_outstanding_amount" id="client_outstanding_amount" name="client_outstanding_amount" value="{!v.policy_trans.Client_Outstanding_Amount__c}" class="slds-input fullwidth" disabled="true" />
+                            </div>  
+                        </div>
+                        <div class="slds-size_2-of-6 slds-col--padded">                           
+                            <label class="slds-form-element__label">Amount Outstanding</label>        
+                            <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left slds-size_full">
+                                <div class="slds-icon slds-input__icon slds-input__icon_left slds-icon-text-default">$</div>
+                                <input type="number" aura:id="amount_outstanding" id="amount_outstanding" name="amount_outstanding" value="{!v.enrollment.Amount_Outstanding__c}" class="slds-input fullwidth" disabled="true" />
+                            </div>                         
+                        </div>
+                        <div class="slds-size_1-of-6 slds-col--padded"/>
+                    </div>                  
+                </div>                                                
+                <div class="slds-row">
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                    <div class="slds-size_2-of-6 slds-col--padded">
+
+                    </div>
+                    <div class="slds-size_2-of-6 slds-col--padded">
+                        
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                </div>
+                <div class="slds-row">
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                    <div class="slds-size_2-of-6 slds-col--padded">
+                        <label class="slds-form-element__label">Amount</label>        
+                        <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left slds-size_full">
+                            <div class="slds-icon slds-input__icon slds-input__icon_left slds-icon-text-default">$</div>
+                            <input type="number" aura:id="amount" id="amount" value="{!v.policy_trans.Amount__c}" name="amount" class="slds-input fullwidth" step="0.01" />
+                        </div>                          
+                    </div>
+                    <div class="slds-size_2-of-6 slds-col--padded slds-hide" aura:id="auth_numberDiv">       
+                        <lightning:input aura:id="auth_number" type="number" value="{!v.policy_trans.Auth_Number__c}"  min="0" step="1" label="Auth Number" />      
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded"/></div>
+                <br/>
+                <div class="slds-row">              
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                    <div class="slds-size_2-of-6 slds-col--padded">
+                        <fieldset class="slds-form-element">
+                            <legend class="slds-form-element__legend slds-form-element__label">
+                                <abbr class="slds-required" title="required">*</abbr>Payment/Refund</legend>
+                            <div class="slds-form-element__control slds-has-error">
+                                <div class="slds-radio_button-group">
+                                    <span class="slds-button slds-radio_button">
+                                        <input name="radio" type="radio" id="Payment_RadioBtn" aura:id="Payment_RadioBtn" value="Payment" onclick="{!c.paymentSelectionHandler}" />
+                                        <label class="slds-radio_button__label" for="Payment_RadioBtn">
+                                            <span class="slds-radio_faux">Payment</span>
+                                        </label>
+                                    </span>                              
+                                    <span class="slds-button slds-radio_button">
+                                        <input name="radio" type="radio" id="Refund_RadioBtn" aura:id="Refund_RadioBtn" value="Refund" onclick="{!c.refundSelectionHandler}"/> 
+                                        <label class="slds-radio_button__label" for="Refund_RadioBtn">
+                                            <span class="slds-radio_faux">Refund</span>
+                                        </label>
+                                    </span>
+                                </div>
+                                <div id="payment_refund_error" aura:id="payment_refund_error"   class="slds-form-element__help slds-hide">This field is required</div>
+                            </div>
+                        </fieldset> 
+                    </div>
+                    <div class="slds-size_2-of-6 slds-col--padded" >
+                                                 
+                        <div class="" aura:id="payment_Div">
+                            <lightning:select aura:id="payment_type"  label="Payment Type" class="slds-hide" value="{!v.policy_trans.Payment_Type__c}" required="true" onchange="{!c.paymentSelectionHandler}">                                                           
+                                <option value="Choose one..." text="Choose one..." selected="true" />
+								<aura:iteration items="{!v.payment_type}" var="item">
+                                    <option value="{!item.description}" text="{!item.description}" />
+                                </aura:iteration>
+                            </lightning:select>		                                         
+                            <div id="payment_type_error" aura:id="payment_type_error"   class="slds-form-element__help slds-hide">Payment Type is required</div>
+                        </div>
+                        
+                        <div class="" aura:id="refund_to_Div">
+                            <lightning:select aura:id="refund_to"  label="Refund To" value="{!v.policy_trans.Refund_To__c}" class="slds-hide" required="true" onchange="{!c.refundSelectionHandler}">                     	                                
+                               <option value="Choose one..." text="Choose one..." selected="true" />
+                                <aura:iteration items="{!v.refund_type}" var="item">
+                                    <option value="{!item.description}" text="{!item.description}" />
+                                </aura:iteration>
+                            </lightning:select>     
+                            <div id="refund_to_error" aura:id="refund_to_error" class="slds-form-element__help slds-hide">Refund To is required</div>
+                        </div>                                                                        
+                    </div>             
+                </div>	
+                <br/>
+                <div class="slds-row">              
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                    <div class="slds-size_2-of-6 slds-col--padded">   
+                        <lightning:input type="text" aura:id="card_holder_name"  label="Card Holder Name" class="slds-hide" value="{!v.policy_trans.Card_Holder_Name__c}" />  
+                        
+                    </div>
+                    <div class="slds-size_2-of-6 slds-col--padded">
+                        <lightning:input type="text" aura:id="encrypted_card_number" label="Encrypted Card Number" class="slds-hide"  value="{!v.policy_trans.Encrypted_Card_Number__c}"/>
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded"></div>                
+                </div>	
+                
+                <div class="slds-row">              
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                    <div class="slds-size_2-of-6 slds-col--padded">  
+                        
+                    </div>
+                    <div class="slds-size_2-of-6 slds-col--padded slds-hide" aura:id="expiration_date_Div">
+                        <ui:inputDate aura:id="expiration_date" label="Expiration Date"  displayDatePicker="true" format="MM/DD/YYYY"  value="{!v.policy_trans.Expiration_Date__c}"/>
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded"></div>                
+                </div>	
+                <div class="slds-row">              
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                    <div class="slds-size_2-of-6 slds-col--padded">  
+                        <lightning:input type="text" aura:id="name_on_check" label="Name on Check" class="slds-hide" value="{!v.policy_trans.Name_on_Check__c}" required="{!v.require_check_fields}"/>		
+                    </div>
+                    <div class="slds-size_2-of-6 slds-col--padded">
+                        <lightning:input type="text" aura:id="check_number" id="check_number" class="slds-hide" label="Check Number" value="{!v.policy_trans.Check_Number__c}"  required="{!v.require_check_fields}"/>
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded"></div>                
+                </div>	
+                
+                <div class="slds-row">              
+                    <div class="slds-size_1-of-6 slds-col--padded"/>
+                    <div class="slds-size_2-of-6 slds-col--padded middle">   
+                        <lightning:input type="checkbox" aura:id="take_net_payment_only"  label="Take Net Payment Only" class="slds-hide"  value="{!v.policy_trans.Take_Net_Payment_Only__c}"/>
+                    </div>
+                    <div class="slds-size_2-of-6 slds-col--padded">
+                        <lightning:select aura:id="refund_type"  label="Refund Type" class="slds-hide"  value="{!v.policy_trans.Refund_Type__c}" required="true" >  
+                            <aura:iteration items="{!v.refund_type}" var="item">
+                                <option value="{!item.description}" text="{!item.description}" />
+                            </aura:iteration>
+                        </lightning:select>	                                         
+                    </div>
+                    <div class="slds-size_1-of-6 slds-col--padded"></div>                
+                </div>	                 		
+                <div class="slds-row text-center">
+                    <lightning:button variant="brand" label="Add" onclick="{!c.addPaymentButtonHandler}" /> &nbsp;
+                    <lightning:button variant="brand" label="Done" onclick="{!c.donePayingHandler}" />
+                    {!v.refund_type}
+                </div>
+                <br/><br/>
+                <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                	<thead>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Payer/Cardholder</th>
+                        <th>Card/Check#</th>
+                        <th>Amount</th>
+                        <th>Auth Number</th>
+                        <th>Rep</th>
+                        <th>Status</th>
+
+                    </thead>
+                    <tbody>
+                    	<aura:iteration items="{!v.PaymentsList}" var="p">
+                        	<tr>
+                                <td>{!p.paymentDate}</td>
+                                <td>{!p.paymentType}</td>
+                                <td>{!p.payerName}{!p.cardHolderName}</td>
+                                <td>{!p.checkNumber}{!p.maskedCardNumber}</td>
+                                <td>{!p.amount}</td>
+                                <td>{!p.authorizationNumber}</td>
+                                <td>{!p.userName}</td>
+                                <td>{!p.paymentStatus}</td>
+                            </tr>
+                        </aura:iteration>
+                    </tbody>
+                </table>
+            </div>
+        </aura:renderIf>
+    </div>
+    
+    <!-- ########## Exit confirmation modal ########## -->
+    <div role="dialog" tabindex="-1" aria-labelledby="header43" aura:id="confirm_window" class="slds-modal slds-modal_large">
+        <div class="slds-modal__container" style="width: 65%;">
+            <div class="slds-modal__header">
+                Confirm
+            </div> 
+            <div class="slds-modal__content slds-p-around--medium">
+                <div class="slds-p-left_xx-large slds-p-right_xx-large">
+                    <h3 style="font-size: 1rem;" title="">Are you sure you want to exit this enrollment? Any changes you have made will be lost.</h3>
+                </div>                  
+            </div>                
+            <div class="slds-modal__footer">
+                <ui:button label="No" press="{!c.stayOnWizard}" class="slds-button slds-button_brand" />
+                <ui:button label="Yes" press="{!c.exitWizard}"  class="slds-button slds-button_outline-brand"/>
+            </div>
+        </div>
+    </div>
+    <div class="slds-backdrop " aura:id="confirm_window_backdrop"></div>
+    
+    <!-- ########## Create New Enrollment ########## -->
+    <div role="dialog" tabindex="-1" aria-labelledby="header43" aura:id="new_enrollment_window" class="slds-modal slds-modal_large">
+        <div class="slds-modal__container" style="width: 65%;">
+            <div class="slds-modal__header">
+                Confirm
+            </div> 
+            <div class="slds-modal__content slds-p-around--medium">
+                <div class="slds-p-left_xx-large slds-p-right_xx-large">
+                    <h3 style="font-size: 1rem;" title="">Are you sure you want to exit and start a new enrollment?</h3>
+                </div>                  
+            </div>                
+            <div class="slds-modal__footer">
+                <ui:button label="Cancel" press="{!c.stayOnWizard}" class="slds-button slds-button_brand" />
+                <ui:button label="Yes" press="{!c.launchNewEnrollmentHandler}"  class="slds-button slds-button_outline-brand"/>
+            </div>
+        </div>
+    </div>     
+    <div class="slds-backdrop " aura:id="new_enrollment_window_backdrop"></div>
+
+    <!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ ValidatePolicyTransfer API@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+    <div role="dialog" tabindex="-1" aria-labelledby="header43" aura:id="policy_transfer_window" class="slds-modal slds-modal_large">
+        <div class="slds-modal__container" style="width: 50%;">
+           <header class="slds-modal__header">
+               <lightning:buttonIcon iconName="utility:close" onclick="{!c.cancelValidatePolicyTransaferHandler}" alternativeText="Close" variant="bare-inverse" class="slds-modal__close"/>
+                                   
+               <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate"> {!v.PolicyTransferStatus}</h2>
+           </header>                
+            <div class="slds-modal__content slds-p-around--medium">
+                <div class="slds-p-left_xx-large slds-p-right_xx-large">
+                    Agency Id : <b>{!v.PolicyTransferResponse.agencyId} </b><br/>
+                    Can Be Back Dated Message : <b>{!v.PolicyTransferResponse.canBeBackDatedMessage}</b><br/>
+                    Location Number: <b>{!v.PolicyTransferResponse.locationNumber}</b> <br/>
+                    Message : <b>{!v.PolicyTransferResponse.message}</b> <br/>
+                    New Product Form Number : <b>{!v.PolicyTransferResponse.newProductFormNumber}</b><br/>
+                    Product Id : <b>{!v.PolicyTransferResponse.productId}</b><br/>
+                    Roll OverMessage : <b>{!v.PolicyTransferResponse.rolloverMessage}</b><br/>
+                </div>                  
+            </div>                 
+            <div class="slds-modal__footer">
+                <ui:button label="Cancel" press="{!c.cancelValidatePolicyTransaferHandler}" class="slds-button slds-button_brand" />
+				<ui:button label="Save Policy" press="{!c.modalSaveUnBackDatedPolicyBtn}"  class="slds-button slds-button_outline-brand"/>
+                
+                <aura:if isTrue="{!(v.PolicyTransferResponse.canBeBackDatedMessage!=NULL) || (v.PolicyTransferResponse.rolloverMessage!=NULL)}">
+                	<ui:button label="Yes" press="{!c.backDatePolicyTransferHandler}"  class="slds-button slds-button_outline-brand"/>
+                </aura:if>
+            </div>
+        </div>
+    </div>     
+    <div class="slds-backdrop " aura:id="policy_transfer_window_backdrop"></div>
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ BACK DATE @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  -->
+    <div role="dialog" tabindex="-1" aria-labelledby="header43" aura:id="back_date_policy_window" class="slds-modal slds-modal_large">
+        <div class="slds-modal__container" style="width: 50%;">
+           <header class="slds-modal__header">
+               <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate"> Back date policy transfer</h2>
+           </header>             
+            <div class="slds-modal__content slds-p-around--medium">
+                <div class="slds-p-left_xx-large slds-p-right_xx-large">
+                    Do you want to back date the transfer to last month?
+                </div>                  
+            </div>                 
+            <div class="slds-modal__footer">
+                <ui:button label="Cancel" press="{!c.backDateCancel}" class="slds-button slds-button" aura:id="back_date_cancel_btn"/>
+                <ui:button label="No" press="{!c.doNotBackDatePolicyTransferHandler}" class="slds-button slds-button_brand" aura:id="do_not_back_date_policy_btn"/>
+                <ui:button label="Yes" press="{!c.backDatePolicyTransferToLastMonthHandler}"  class="slds-button slds-button_outline-brand"  aura:id="back_date_policy_btn"/>
+                <ui:button label="Save" press="{!c.modalSaveBackDatedPolicyBtn}"  class="slds-button slds-button_outline-brand slds-hide" aura:id="save_back_date_policy_btn"/>
+            </div>
+        </div>
+    </div>     
+    <div class="slds-backdrop " aura:id="back_date_policy_backdrop"></div>
+    
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@VALID AGENCY@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-->
+    <div role="dialog" tabindex="-1" aria-labelledby="header43" aura:id="valid_agency_window" class="slds-modal slds-modal_large">
+        <div class="slds-modal__container" style="width: 50%;">            
+           <header class="slds-modal__header">
+               <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate"> {!v.PolicyTransferStatus}</h2>
+           </header>             
+            <div class="slds-modal__content slds-p-around--medium">
+                <div class="slds-p-left_xx-large slds-p-right_xx-large">
+                    {!v.PolicyTransferMessage}<br/>
+                    Message : <b>{!v.PolicyTransferResponse.message}</b> <br/>
+                </div>                  
+            </div>                
+            <div class="slds-modal__footer">
+                <ui:button label="Cancel" press="{!c.cancelAgencyValidationHandler}" class="slds-button slds-button_brand" />
+                <ui:button label="OK" press="{!c.cancelAgencyValidationHandler}"  class="slds-button slds-button_outline-brand"/>
+            </div> 
+        </div>
+    </div>     
+    <div class="slds-backdrop " aura:id="valid_agency_backdrop"></div>   
+    
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@POST SAVE CALCULATE RATE MODAL@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-->
+    <aura:if isTrue="{!v.CalculateRateModalShow}">
+        <div role="dialog" tabindex="-1" aria-labelledby="header43" aura:id="calculate_rate_window" class="slds-modal slds-modal_large slds-fade-in-open">
+            <div class="slds-modal__container" style="width: 80%;">            
+               <header class="slds-modal__header">
+                   <lightning:buttonIcon iconName="utility:close" onclick="{!c.cancelModalHandler}" alternativeText="Close" variant="bare-inverse" class="slds-modal__close"/>                               
+                   <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Rate Info</h2>
+               </header>             
+                <div class="slds-modal__content slds-p-around--medium">
+                    <div class="slds-p-left_xx-large slds-p-right_xx-large">
+                    <div class="slds-row">
+                        <div class="slds-size_1-of-1 slds-col--padded">
+                            <h3 class="slds-text-heading_medium">Totals</h3>
+                        </div>
+                    </div>                         
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Policy Cost</th>                                        
+                                        <th>Total Paid</th>                                        
+                                        <th>Outstanding Amount</th>                                        
+                                        <th>Client Cost</th>                                         
+                                        <th>Client Paid</th>                           
+        								<th>Client Outstanding Amount</th> 
+                                    </tr>
+                                </thead>
+                                <tbody>                                
+                                        <tr>
+                                            <td>${!v.TotalCost}</td>                                             
+                                            <td>${!v.policy_trans.Total_Paid__c}</td>                         
+                                            <td>${!v.policy_trans.Outstanding__c}</td>                                              
+                                            <td>${!v.policy_trans.Total_Due__c}</td>
+                                            <td>${!v.policy_trans.Total_Client_Paid__c}</td>
+                                            <td>${!v.policy_trans.Client_Outstanding_Amount__c}</td>
+                                        </tr>                            
+                                </tbody>
+                        </table>
+                        <br/>                                                                        
+                    </div>                  
+                </div>                
+                <div class="slds-modal__footer">
+                    <ui:button label="OK" press="{!c.cancelModalHandler}"  class="slds-button slds-button_outline-brand"/>
+                </div> 
+            </div>
+        </div>     
+        <div class="slds-backdrop slds-backdrop--open" aura:id="calculate_rate_backdrop"></div>        
+    </aura:if>   
+    <!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@CALL SAVE POST TRANSFER@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-->
+    <c:PolicyNotesModal showHideModal="{!v.PolicyNotesModal}" title="Add Policy Notes" recordStatus="{!v.enrollment.Record_Status__c}"/>
+    
+	<!-- ########## Payment Flow Modal ########## -->
+    <aura:if isTrue="{!v.PaymentModalShow}">
+        <div role="dialog" tabindex="-1" aura:id="payment_flow_window" class="slds-modal slds-modal_large slds-fade-in-open">
+            <div class="slds-modal__container" style="width: 45%;">
+                <div class="slds-modal__header"><h3 class="slds-text-heading_medium">{!v.PaymentModalTitle}</h3></div>
+                <div class="slds-modal__content slds-p-around--medium">
+                    <div class="slds-row">
+                        <div class="slds-col--padded slds-size_1-of-1 slds-text-align_center">
+                            {!v.PaymentModalMessage}
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-modal__footer">
+                    <aura:if isTrue="{!v.PaymentModalOption == 'back'}">
+                    	<ui:button aura:id="pf_back_button" label="Back" press="{!c.handlePaymentModalBack}" class="slds-button slds-button_outline-brand" />
+                    </aura:if>
+                    <aura:if isTrue="{!v.PaymentModalOption == 'save'}">
+                    	<ui:button aura:id="pf_save_button" label="Save" press="{!c.handlePaymentModalSave}" class="slds-button slds-button_outline-brand" />
+                    </aura:if>
+                    <aura:if isTrue="{!v.PaymentModalOption == 'doneanyway'}">
+                        <ui:button aura:id="pf_da_no"  label="No" press="{!c.handlePaymentModalBack}" class="slds-button slds-button_outline-brand" />
+                        <ui:button aura:id="pf_da_yes" label="Yes" press="{!c.handlePaymentModalSave}" class="slds-button slds-button_outline-brand" />
+                    </aura:if>
+                    <aura:if isTrue="{!v.PaymentModalOption == 'save-unpaid'}">
+                        <ui:button aura:id="pf_su_no" label="No" press="{!c.handlePaymentModalBack}" class="slds-button slds-button_outline-brand" />
+                        <ui:button aura:id="pf_su_yes" label="Yes" press="{!c.handlePaymentModalSaveUnpaid}" class="slds-button slds-button_outline-brand" />
+                    </aura:if>
+                </div>
+            </div>
+        </div>
+        <div class="slds-backdrop slds-backdrop--open" aura:id="payment_flow_window_backdrop"/>
+    </aura:if>
+    
+    
+    <!-- ########## Traveler Rates Modal ########## -->
+    <div aura:id="traveler_rates_modal" class="slds-hide">
+        <div role="dialog" tabindex="-1" aura:id="traveler_rates_window" class="slds-modal slds-modal_large slds-fade-in-open">
+            <div class="slds-modal__container" style="width: 65%;">
+                <div class="slds-modal__header">
+                    <h3 class="slds-text-heading_medium">Total Policy Cost: ${!v.policyRateDetail.totalPolicyCost}</h3>
+                </div> 
+                <div class="slds-modal__content slds-p-around--medium">
+                    <div class="slds-row">
+                        <div class="slds-size_1-of-1 slds-col--padded">
+                            <h3 class="slds-text-heading_medium">Traveler Rates</h3>
+                        </div>
+                    </div>
+                    <div class="slds-row">
+                        <div class="slds-size_1-of-1 slds-col--padded">
+                            <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Full Name</th>
+                                        <th>Age</th>
+                                        <th>Package</th>
+                                        <th>Gross</th>
+                                        <aura:iteration items="{!v.policyRateDetail.travelerRates[0].upgradeRates}" var="ur">
+                                            <th>{!ur.code}</th>
+                                        </aura:iteration>
+                                        <th>Note</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <aura:iteration items="{!v.policyRateDetail.travelerRates}" var="tr">
+                                        <tr>
+                                            <td>{!tr.fullName}</td>
+                                            <td>{!tr.age}</td>
+                                            <td>{!tr.package}</td>
+                                            <td>{!tr.gross}</td>
+                                            <aura:iteration items="{!tr.upgradeRates}" var="ur">
+                                                <td>${!ur.rate}</td>
+                                            </aura:iteration>
+                                            <td>{!tr.note}</td>
+                                        </tr>
+                                    </aura:iteration>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="slds-row">
+                        <div class="{! 'slds-size_1-of-1 slds-col--padded ' + (v.policyRateDetail.policyUpgradeRates.length > 0 ? 'slds-show' : 'slds-hide') }"> 
+                            <h3 class="slds-text-heading_medium">Upgrade Rates</h3> 
+                        </div>
+                    </div>
+                    <div class="slds-row">
+                        <div class="{! 'slds-size_1-of-1 slds-col--padded ' + (v.policyRateDetail.policyUpgradeRates.length > 0 ? 'slds-show' : 'slds-hide') }"> 
+                            <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <aura:iteration items="{!v.policyRateDetail.policyUpgradeRates}" var="ur">
+                                        <tr><td>{!ur.code}</td><td>${!ur.rate}</td></tr>
+                                    </aura:iteration>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>                
+                <div class="slds-modal__footer">
+                    <ui:button label="Done" press="{!c.closeTravelerRatesModal}" class="slds-button slds-button_outline-brand"/>
+                </div>
+            </div>
+        </div>     
+        <div class="slds-backdrop slds-backdrop--open" aura:id="traveler_rates_window_backdrop"></div>
+    </div>
+
+    <!-- Processing Spinner - displayed during most API calls and any other "downtime" -->
+    <lightning:spinner alternativeText="Processing" size="large" variant="brand" aura:id="processing-spinner" class="slds-is-fixed slds-hide" />
+
+    <!-- ########## Docked Button Footer ########## -->
+    <div class="slds-docked-form-footer">
+        <button  class="slds-button slds-button_neutral " onclick="{!c.openConfirmationModal}">Cancel</button>      
+        <aura:if isTrue="{!v.currentTab == 7  &amp;&amp; v.enrollment.Id }">
+            <button aura:id="getSummaryCloneButton" class="slds-button slds-button_neutral " onclick="{!c.cloneButton}" >Clone</button>
+        </aura:if>
+        
+        <button aura:id="prevButton" class="slds-button slds-button_neutral " onclick="{!c.goBackward}" disabled="{!v.goBackButton}">Back</button>
+       
+        <aura:if isTrue="{!v.currentTab == 1 &amp;&amp; v.recordId != ''}">
+            <button aura:id="transferButton" class="slds-button slds-button_neutral" onclick="{!c.validateTransferHandler}" >Transfer</button>
+        </aura:if>  
+        <aura:if isTrue="{!v.recordId != ''}">        
+        	<button aura:id="saveButton" class="slds-button slds-button_neutral" onclick="{!c.saveButtonHandler}" >Save</button> 
+        </aura:if>
+         
+        <aura:if isTrue="{!v.currentTab == 2}">
+            <button aura:id="getQuoteButton" class="slds-button slds-button_neutral" onclick="{!c.getQuoteButtonHandler}" disabled="{!v.getQuoteButton}">Get Quote</button>
+        </aura:if>
+        <aura:if isTrue="{!v.currentTab == 5 &amp;&amp; v.recordId != '' &amp;&amp; v.recordStatus!='Saved Quote'}">
+        	<button aura:id="calculateRateButton" class="slds-button slds-button_neutral" onclick="{!c.calculateRateHandler}">Calculate Rate</button>
+        </aura:if>
+        <!-- Summary Tab Buttons -->
+        <aura:if isTrue="{!v.currentTab == 7}">
+            <button aura:id="getSummaryPurchaseButton" class="slds-button slds-button_neutral " onclick="{!c.purchaseButtonHandler}" >Purchase</button>  
+        </aura:if>
+        <!--<aura:if isTrue="{!and(v.currentTab != 2, v.currentTab != 7, v.currentTab != 6)}">  -->
+        <aura:if isTrue="{! v.currentTab != 2 &amp;&amp; v.currentTab != 7 &amp;&amp; v.currentTab != 6}">
+            <button aura:id="nextButton" class="slds-button slds-button_neutral " onclick="{!c.goForward}" disabled="{!v.goFowardButton}">Next</button>
+        </aura:if>
+        <aura:if isTrue="{!v.currentTab == 6}">
+            <button aura:id="continueButton" class="slds-button slds-button_neutral" onclick="{!c.continueButtonHandler}">Continue</button>
+        </aura:if>
+        <aura:if isTrue="{!v.currentTab == 9}">
+            <button aura:id="clearPaymentDataBtn" class="slds-button slds-button_neutral" onclick="{!c.clearPaymentData}" >Clear</button>    
+        </aura:if>
+        <aura:if isTrue="{!v.ShowNewEnrollmentButton}">
+        	<button aura:id="saveEnrollmentBtn" class="slds-button slds-button_neutral" onclick="{!c.openNewEnrollmentModal}" >New Enrollment</button>   
+        </aura:if>
+        <button aura:id="debugButton" class="slds-button slds-button_neutral" onclick="{!c.debugPrintout}">DEBUG</button>
+    </div> 
+</aura:component>

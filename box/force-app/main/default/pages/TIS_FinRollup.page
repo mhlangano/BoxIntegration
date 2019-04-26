@@ -1,0 +1,188 @@
+<apex:page standardController="Account"  extensions="TIS_FinRollup" id="thePage">
+    
+<table style="width:100%">
+  <tr>
+    <td>
+    <apex:pageBlock title="Policy Counts">
+        <apex:pageBlockTable value="{!TableData}" var="ySum">
+            <apex:column >
+                <apex:facet name="header">Year</apex:facet>
+                    {!ySum.Year}
+            </apex:column>
+            
+            <!--- Policy Counts --->
+            
+            <apex:column >
+                <apex:facet name="header">Quarter 1</apex:facet>
+                <apex:outputText dir="RTL" value="{0, number, ###,###,###,###}">  
+                    <apex:param value="{!ySum.Q1_Count}" />  
+                </apex:outputText>                   
+            </apex:column>            
+            
+            <apex:column >
+                <apex:facet name="header">Quarter 2</apex:facet>
+                <apex:outputText value="{0, number, ###,###,###,###}">  
+                    <apex:param value="{!ySum.Q2_Count}" />  
+                </apex:outputText>                   
+            </apex:column>             
+            
+            <apex:column >
+                <apex:facet name="header">Quarter 3</apex:facet>
+                <apex:outputText value="{0, number, ###,###,###,###}">  
+                    <apex:param value="{!ySum.Q3_Count}" />  
+                </apex:outputText>                   
+            </apex:column>
+            
+            <apex:column >
+                <apex:facet name="header">Quarter 4</apex:facet>
+                <apex:outputText value="{0, number, ###,###,###,###}">  
+                    <apex:param value="{!ySum.Q4_Count}" />  
+                </apex:outputText>                   
+            </apex:column>              
+            
+            <apex:column >
+                <apex:facet name="header">Year Total</apex:facet>
+                <apex:outputText value="{0, number, ###,###,###,###}">  
+                    <apex:param value="{!ySum.YT_Count}" />  
+                </apex:outputText>                  
+            </apex:column>              
+
+        </apex:pageBlockTable>
+    </apex:pageBlock> 
+    </td>
+    <td>
+    <apex:pageBlock title="Premiums">            
+        <apex:pageBlockTable value="{!TableData}" var="ySum">
+            <apex:column >
+                <apex:facet name="header">Year</apex:facet>
+                    {!ySum.Year}
+            </apex:column>
+    
+            <!--- Premiums --->
+
+            <apex:column >
+                <apex:facet name="header">Quarter 1</apex:facet>
+                <apex:outputText value="{0, number, $###,###,###,##0.00}">  
+                    <apex:param value="{!ySum.Q1_Prem}" />  
+                </apex:outputText>                
+            </apex:column>            
+            
+            <apex:column >
+                <apex:facet name="header">Quarter 2</apex:facet>
+                <apex:outputText value="{0, number, $###,###,###,##0.00}"> 
+                    <apex:param value="{!ySum.Q2_Prem}" />  
+                </apex:outputText>                 
+            </apex:column>
+    
+            <apex:column >
+                <apex:facet name="header">Quarter 3</apex:facet>
+                <apex:outputText value="{0, number, $###,###,###,##0.00}">  
+                    <apex:param value="{!ySum.Q3_Prem}" />  
+                </apex:outputText>                 
+            </apex:column>
+
+            <apex:column >
+                <apex:facet name="header">Quarter 4</apex:facet>
+                <apex:outputText value="{0, number, $###,###,###,##0.00}">  
+                    <apex:param value="{!ySum.Q4_Prem}" />  
+                </apex:outputText>                 
+            </apex:column>
+
+            <apex:column >
+                <apex:facet name="header">Year Total</apex:facet>
+                <apex:outputText value="{0, number, $###,###,###,##0.00}">  
+                    <apex:param value="{!ySum.YT_Prem}" />  
+                </apex:outputText>                 
+            </apex:column>
+
+        </apex:pageBlockTable>
+    </apex:pageBlock> 
+    </td>      
+  </tr>
+</table>    
+    
+    
+    
+       
+        
+
+  
+    
+    <!----
+    <apex:pageBlock >
+        <apex:dataTable value="{!TableData}" var="ySum" id="theTable"
+            rowClasses="odd,even" styleClass="tableClass">
+            <!--- <apex:facet name="caption">table caption</apex:facet> ---
+            <apex:facet name="header">Financial Summary Stats</apex:facet>
+            <!--- <apex:facet name="footer">table footer</apex:facet> ---
+    
+            <apex:column >
+                <apex:facet name="header">Year</apex:facet>
+                <apex:facet name="footer">column footer</apex:facet>
+                <apex:outputText value="{!ySum.Year}"/>
+            </apex:column>
+    
+            <apex:column >
+                <apex:facet name="header">Q1 Premium $</apex:facet>
+                <apex:facet name="footer">Premium</apex:facet>
+                <apex:outputText value="{!ySum.Q1_Prem}"/>
+            </apex:column>
+    
+            <apex:column >
+                <apex:facet name="header">Q1 Premium #</apex:facet>
+                <apex:facet name="footer">Policy Count</apex:facet>
+                <apex:outputText value="{!ySum.Q1_Count}"/>
+            </apex:column>        
+            
+            <apex:column >
+                <apex:facet name="header">Q2 Premium $</apex:facet>
+                <apex:facet name="footer">Premium</apex:facet>
+                <apex:outputText value="{!ySum.Q2_Prem}"/>
+            </apex:column>
+    
+            <apex:column >
+                <apex:facet name="header">Q2 Premium #</apex:facet>
+                <apex:facet name="footer">Policy Count</apex:facet>
+                <apex:outputText value="{!ySum.Q2_Count}"/>
+            </apex:column>          
+            
+            <apex:column >
+                <apex:facet name="header">Q3 Premium $</apex:facet>
+                <apex:facet name="footer">Premium</apex:facet>
+                <apex:outputText value="{!ySum.Q3_Prem}"/>
+            </apex:column>
+    
+            <apex:column >
+                <apex:facet name="header">Q3 Premium #</apex:facet>
+                <apex:facet name="footer">Policy Count</apex:facet>
+                <apex:outputText value="{!ySum.Q3_Count}"/>
+            </apex:column>  
+    
+            <apex:column >
+                <apex:facet name="header">Q4 Premium $</apex:facet>
+                <apex:facet name="footer">Premium</apex:facet>
+                <apex:outputText value="{!ySum.Q4_Prem}"/>
+            </apex:column>
+    
+            <apex:column >
+                <apex:facet name="header">Q4 Premium #</apex:facet>
+                <apex:facet name="footer">Policy Count</apex:facet>
+                <apex:outputText value="{!ySum.Q4_Count}"/>
+            </apex:column>          
+            
+            <apex:column >
+                <apex:facet name="header">Yearly Total Premium $</apex:facet>
+                <apex:facet name="footer">Premium</apex:facet>
+                <apex:outputText value="{!ySum.YT_Prem}"/>
+            </apex:column>
+    
+            <apex:column >
+                <apex:facet name="header">Yearly Total Premium #</apex:facet>
+                <apex:facet name="footer">Policy Count</apex:facet>
+                <apex:outputText value="{!ySum.YT_Count}"/>
+            </apex:column>          
+            
+        </apex:dataTable>    
+    </apex:pageBlock>
+    ---->
+</apex:page>

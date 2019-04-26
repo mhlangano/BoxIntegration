@@ -1,0 +1,16 @@
+<apex:page controller="UserSelect" >
+
+	<apex:form id="form_Main">
+		<apex:pageBlock >
+			<apex:pageBlockSection columns="1" title="Select An Owner">
+				<apex:panelGrid columns="2" style="width:50%">
+					<apex:selectList value="{!UserID}" size="1">
+						<apex:selectOptions value="{!AccountOwners}"/>
+					</apex:selectList>
+					<apex:commandButton value="View Policy Count Report" action="{!getredirect}"/>
+				</apex:panelGrid>
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+	</apex:form>
+
+</apex:page>

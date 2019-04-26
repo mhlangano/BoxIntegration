@@ -1,0 +1,7 @@
+.THIS .slds-modal__container{ 
+    max-width: 70rem !important; 
+    width:80% !important;
+} 
+.THIS .slds-textarea {
+    height:100px !important; 
+}
